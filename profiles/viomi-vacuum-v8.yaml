@@ -136,14 +136,14 @@ preferences:
     default: ""
 - name: token
   title: "Token urządzenia"
-  description: "32-znakowy token szesnastkowy (hex) uzyskany z Mi Home lub miiocli"
+  description: "32-znakowy token szesnastkowy (hex) z Mi Home lub miiocli"
   required: true
   preferenceType: string
   definition:
     stringType: text
     default: ""
 - name: pollingInterval
-  title: "Interwał odpytywania (sekundy)"
+  title: "Interwał odpytywania (s)"
   description: "Częstotliwość sprawdzania statusu odkurzacza (domyślnie 30s)"
   required: false
   preferenceType: integer
@@ -169,7 +169,7 @@ preferences:
   preferenceType: enumeration
   definition:
     options:
-      auto: "Automatycznie (wg zamontowanego pojemnika)"
+      auto: "Automatycznie (wg pojemnika)"
       vacuum: "Tylko odkurzanie"
       vacuum_and_mop: "Odkurzanie i mopowanie"
       mop: "Tylko mopowanie"
