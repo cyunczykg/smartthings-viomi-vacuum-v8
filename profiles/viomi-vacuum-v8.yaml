@@ -1,0 +1,183 @@
+name: viomi-vacuum-v8
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: battery
+    version: 1
+  - id: robotCleanerMovement
+    version: 1
+  - id: robotCleanerCleaningMode
+    version: 1
+  - id: robotCleanerTurboMode
+    version: 1
+  - id: fanSpeed
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: RobotCleaner
+- id: dock
+  label: "Powrót do bazy"
+  capabilities:
+  - id: momentary
+    version: 1
+  categories:
+  - name: Switch
+- id: locate
+  label: "Zlokalizuj odkurzacz"
+  capabilities:
+  - id: momentary
+    version: 1
+  categories:
+  - name: Switch
+deviceConfig:
+  dashboard:
+    states:
+      - component: main
+        capability: switch
+        version: 1
+        group: main
+        values:
+          - label: "{{switch.value}}"
+        composite: true
+      - component: main
+        capability: battery
+        version: 1
+        group: main
+        values:
+          - label: " {{battery.value}}%"
+        composite: true
+    actions:
+      - component: main
+        capability: switch
+        version: 1
+    basicPlus: []
+  detailView:
+    - component: main
+      capability: switch
+      version: 1
+    - component: main
+      capability: battery
+      version: 1
+    - component: main
+      capability: robotCleanerMovement
+      version: 1
+    - component: main
+      capability: robotCleanerCleaningMode
+      version: 1
+    - component: main
+      capability: robotCleanerTurboMode
+      version: 1
+    - component: main
+      capability: fanSpeed
+      version: 1
+    - component: dock
+      capability: momentary
+      version: 1
+    - component: locate
+      capability: momentary
+      version: 1
+    - component: main
+      capability: refresh
+      version: 1
+  automation:
+    conditions:
+      - component: main
+        capability: switch
+        version: 1
+      - component: main
+        capability: battery
+        version: 1
+      - component: main
+        capability: robotCleanerMovement
+        version: 1
+      - component: main
+        capability: robotCleanerCleaningMode
+        version: 1
+      - component: main
+        capability: robotCleanerTurboMode
+        version: 1
+      - component: main
+        capability: fanSpeed
+        version: 1
+    actions:
+      - component: main
+        capability: switch
+        version: 1
+      - component: main
+        capability: robotCleanerMovement
+        version: 1
+      - component: main
+        capability: robotCleanerCleaningMode
+        version: 1
+      - component: main
+        capability: robotCleanerTurboMode
+        version: 1
+      - component: main
+        capability: fanSpeed
+        version: 1
+      - component: dock
+        capability: momentary
+        version: 1
+      - component: locate
+        capability: momentary
+        version: 1
+
+preferences:
+- name: ipAddress
+  title: "Adres IP"
+  description: "Adres IP odkurzacza w Twojej sieci lokalnej (np. 192.168.1.50)"
+  required: true
+  preferenceType: string
+  definition:
+    stringType: text
+    default: ""
+- name: token
+  title: "Token urządzenia"
+  description: "32-znakowy token szesnastkowy (hex) uzyskany z Mi Home lub miiocli"
+  required: true
+  preferenceType: string
+  definition:
+    stringType: text
+    default: ""
+- name: pollingInterval
+  title: "Interwał odpytywania (sekundy)"
+  description: "Częstotliwość sprawdzania statusu odkurzacza (domyślnie 30s)"
+  required: false
+  preferenceType: integer
+  definition:
+    minimum: 10
+    maximum: 300
+    default: 30
+- name: offAction
+  title: "Akcja po wyłączeniu (Off)"
+  description: "Co ma zrobić odkurzacz po wyłączeniu przełącznika głównego"
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      dock: "Powrót do bazy (Ładowanie)"
+      stop: "Zatrzymanie (Stop)"
+      pause: "Wstrzymanie (Pauza)"
+    default: "dock"
+- name: mopMode
+  title: "Tryb pracy mopa"
+  description: "Wybór trybu odkurzania/mopowania"
+  required: false
+  preferenceType: enumeration
+  definition:
+    options:
+      auto: "Automatycznie (wg zamontowanego pojemnika)"
+      vacuum: "Tylko odkurzanie"
+      vacuum_and_mop: "Odkurzanie i mopowanie"
+      mop: "Tylko mopowanie"
+    default: "auto"
+- name: createDev
+  title: "Utwórz kolejne urządzenie"
+  description: "Przełącz, aby utworzyć dodatkowy profil urządzenia na hubie"
+  required: false
+  preferenceType: boolean
+  definition:
+    default: false

@@ -1,0 +1,5 @@
+name: 'Viomi Vacuum V8'
+packageKey: 'viomi-vacuum-v8'
+permissions:
+  lan: {}
+  discovery: {}
