@@ -3,10 +3,24 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![SmartThings Edge](https://img.shields.io/badge/SmartThings-Edge%20Driver-blue.svg)](https://developer.smartthings.com/)
 [![Platform](https://img.shields.io/badge/Platform-LAN%20%28miIO%29-green.svg)](https://github.com/cyunczykg/smartthings-viomi-vacuum-v8)
+[![Channel Invite](https://img.shields.io/badge/SmartThings%20Channel-Invite%20Link-brightgreen.svg)](https://bestow-regional.api.smartthings.com/invite/VbMbbGG76pMB)
 
 Dedykowany sterownik **SmartThings Edge Driver (LAN)** dla robota sprzątającego **Viomi Vacuum V8** oraz modeli kompatybilnych z protokołem miIO (m.in. Viomi V6, V7, V10, V13, SE, V2 Pro).
 
 Sterownik komunikuje się z odkurzaczem **bezpośrednio w sieci lokalnej (LAN)** za pośrednictwem szyfrowanego protokołu UDP miIO (port 54321), bez potrzeby instalowania Home Assistanta ani korzystania z chmury zewnętrznej.
+
+---
+
+## ⚡ Szybka instalacja (Bez używania terminala)
+
+Możesz zainstalować sterownik bezpośrednio na swoim hubie SmartThings jednym kliknięciem:
+
+1. Kliknij oficjalny link zaproszenia do kanału:  
+   👉 **[Dołącz do kanału Viomi Vacuum V8 (SmartThings Channel Invite)](https://bestow-regional.api.smartthings.com/invite/VbMbbGG76pMB)**
+2. Zaloguj się na swoje konto Samsung / SmartThings.
+3. Kliknij **Enroll** przy Twoim hubie SmartThings.
+4. Kliknij **Available Drivers** i wybierz **Install** przy sterowniku **Viomi Vacuum V8**.
+5. W aplikacji SmartThings na telefonie kliknij **`+`** -> **Dodaj urządzenie** -> **Skanuj w pobliżu** (*Scan nearby*).
 
 ---
 
@@ -33,6 +47,42 @@ Sterownik komunikuje się z odkurzaczem **bezpośrednio w sieci lokalnej (LAN)**
 
 ---
 
+## 📱 Konfiguracja w aplikacji SmartThings
+
+Po dodaniu urządzenia na hubie:
+1. Otwórz aplikację **SmartThings** na smartfonie.
+2. Wejdź w nowo dodane urządzenie **Viomi Vacuum V8**.
+3. Kliknij menu trzech kropek (**`⋮`**) w prawym górnym rogu -> **Ustawienia** (*Settings*).
+4. Wypełnij pola konfiguracyjne:
+   - **Adres IP:** Wpisz adres IP odkurzacza w Twojej sieci domowej (np. `192.168.1.50`).
+   - **Token urządzenia:** Wklej 32-znakowy klucz szesnastkowy (hex).
+   - **Interwał odpytywania (s):** Domyślnie `30` sekund (zakres od `10` do `300`).
+   - **Akcja po wyłączeniu:** Wybierz, co odkurzacz ma zrobić po kliknięciu wyłączenia (*Powrót do bazy*, *Zatrzymanie*, *Wstrzymanie*).
+   - **Tryb pracy mopa:** *Automatycznie (wg pojemnika)* lub wybrany tryb stały.
+5. Naciśnij **Zapisz** (*Save*).
+
+Po zapisaniu ustawień hub natychmiast połączy się z robotem, pobierze stan baterii i aktualny status pracy.
+
+---
+
+## 🛠️ Instalacja zaawansowana (SmartThings CLI)
+
+Dla programistów i osób zarządzających hubem z poziomu konsoli:
+
+- **Channel ID:** `f4a701eb-9cd9-4158-84a4-0620ef17d053`
+- **Driver ID:** `1029a107-421a-48d6-a7ac-30e9c5d98b22`
+- **Package Key:** `viomi-vacuum-v8`
+
+```bash
+# Zapisz hub do kanału
+smartthings edge:channels:enroll f4a701eb-9cd9-4158-84a4-0620ef17d053
+
+# Zainstaluj sterownik na hubie
+smartthings edge:drivers:install 1029a107-421a-48d6-a7ac-30e9c5d98b22 --channel f4a701eb-9cd9-4158-84a4-0620ef17d053
+```
+
+---
+
 ## 📁 Struktura projektu
 
 ```
@@ -52,74 +102,11 @@ Viomi Vacuum V8 Edge Driver/
 
 ---
 
-## 🛠️ Wymagania
-
-1. **Hub SmartThings** (np. Samsung SmartThings Hub v2, v3, Aeotec Smart Home Hub lub SmartThings Station).
-2. **Adres IP** odkurzacza w Twojej sieci lokalnej (np. `192.168.1.50`). Zalecane jest przypisanie stałego adresu IP w routerze (DHCP Reservation).
-3. **32-znakowy token** odkurzacza (np. wyciągnięty z Mi Home lub przez `Xiaomi-cloud-tokens-extractor`).
-4. Narzędzie **SmartThings CLI** na komputerze do wgrania sterownika na hub.
-
----
-
-## 📦 Instrukcja instalacji na hubie SmartThings
-
-### Krok 1: Spakowanie sterownika
-Przejdź do katalogu projektu w terminalu:
-```bash
-smartthings edge:drivers:package .
-```
-*(CLI zwróci wygenerowany `Driver ID`)*
-
-### Krok 2: Utworzenie lub sprawdzenie kanału
-```bash
-smartthings edge:channels
-```
-Jeśli nie masz kanału, utwórz go:
-```bash
-smartthings edge:channels:create
-```
-
-### Krok 3: Zapisanie huba do kanału
-```bash
-smartthings edge:channels:enroll <TWÓJ_CHANNEL_ID>
-```
-
-### Krok 4: Przypisanie sterownika do kanału
-```bash
-smartthings edge:channels:assign <DRIVER_ID> --channel <TWÓJ_CHANNEL_ID>
-```
-
-### Krok 5: Instalacja sterownika na hubie
-```bash
-smartthings edge:drivers:install <DRIVER_ID> --channel <TWÓJ_CHANNEL_ID>
-```
-
----
-
-## 📱 Dodanie i konfiguracja odkurzacza w aplikacji SmartThings
-
-1. Otwórz aplikację **SmartThings** na telefonie.
-2. Przejdź do zakładki **Urządzenia** i naciśnij **`+`** (w prawym górnym rogu) -> **Dodaj urządzenie**.
-3. Wybierz opcję **Skanuj w pobliżu** (*Scan nearby*).
-4. Hub wykryje nowe urządzenie o nazwie **Viomi Vacuum V8**.
-5. Wejdź w nowo utworzone urządzenie, kliknij menu trzech kropek (**`⋮`**) w prawym górnym rogu -> **Ustawienia** (*Settings*).
-6. Wypełnij pola konfiguracyjne:
-   - **Adres IP:** Wpisz adres IP odkurzacza (np. `192.168.1.50`).
-   - **Token urządzenia:** Wklej 32-znakowy klucz szesnastkowy (hex).
-   - **Interwał odpytywania (s):** Domyślnie `30` sekund (zakres od `10` do `300`).
-   - **Akcja po wyłączeniu:** Wybierz, co odkurzacz ma zrobić po kliknięciu wyłączenia (*Powrót do bazy*, *Zatrzymanie*, *Wstrzymanie*).
-   - **Tryb pracy mopa:** *Automatycznie (wg pojemnika)* lub wybrany tryb stały.
-7. Naciśnij **Zapisz** (*Save*).
-
-Po zapisaniu ustawień hub natychmiast nawiąże połączenie UDP z robotem, pobierze stan baterii i aktualny status.
-
----
-
 ## 🔍 Rozwiązywanie problemów
 
 - **Urządzenie wyświetla się jako "Offline":**
-  - Upewnij się, że hub SmartThings i odkurzacz znajdują się w tej samej sieci LAN/podsieci (port UDP `54321` musi być osiągalny).
-  - Upewnij się, że adres IP odkurzacza nie uległ zmianie.
+  - Upewnij się, że hub SmartThings i odkurzacz znajdują się w tej samej sieci LAN/podsieci (port UDP `54321` musi być osiągalny bez blokad na firewallu).
+  - Zaleca się przypisanie stałego IP w routerze (DHCP reservation).
   - Sprawdź poprawność 32-znakowego tokena.
 - **Podgląd logów na żywo:**
   ```bash
