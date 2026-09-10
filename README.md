@@ -47,21 +47,66 @@ Możesz zainstalować sterownik bezpośrednio na swoim hubie SmartThings jednym 
 
 ---
 
+## 🔑 Jak uzyskać adres IP i Token odkurzacza?
+
+Do poprawnego działania sterownik wymaga podania **lokalnego adresu IP** oraz **32-znakowego tokena** urządzenia. 
+
+Najprostszym i najszybszym sposobem na ich pobranie jest użycie narzędzia **[Xiaomi Cloud Tokens Extractor](https://github.com/piotrmachowski/xiaomi-cloud-tokens-extractor)** autorstwa Piotra Machowskiego. Narzędzie loguje się do Twojego konta Xiaomi i automatycznie odczytuje listę wszystkich sparowanych urządzeń wraz z ich tokenami i adresami IP.
+
+### Sposób A: Gotowy program (Windows / Linux)
+1. Przejdź do strony wydań: 👉 **[Releases - Xiaomi Cloud Tokens Extractor](https://github.com/piotrmachowski/xiaomi-cloud-tokens-extractor/releases)**.
+2. Pobierz plik wykonywalny dla swojego systemu (`token_extractor.exe` dla Windows lub `token_extractor` dla Linux).
+3. Uruchom pobrany program.
+
+### Sposób B: Uruchomienie w Pythonie (Linux / macOS / Windows)
+```bash
+git clone https://github.com/piotrmachowski/xiaomi-cloud-tokens-extractor.git
+cd xiaomi-cloud-tokens-extractor
+pip install -r requirements.txt
+python token_extractor.py
+```
+
+### Sposób C: Docker
+```bash
+docker run -it --rm ghcr.io/piotrmachowski/xiaomi-cloud-tokens-extractor
+```
+
+### Instrukcja obsługi narzędzia:
+1. Po uruchomieniu program poprosi Cię o dane logowania do konta **Xiaomi / Mi Home**:
+   - **Username:** Twój e-mail, numer telefonu lub Xiaomi ID powiązany z aplikacją Mi Home.
+   - **Password:** Hasło do konta Xiaomi.
+   - **Server / Region:** Wciśnij **Enter** (aby przeszukać automatycznie wszystkie serwery) lub wpisz kod kraju (np. `pl`, `de`, `cn`).
+2. Program wyświetli tabelę ze znalezionymi urządzeniami. Odszukaj swój odkurzacz:
+   ```text
+   ----------------------------------------------------
+   NAME:     Viomi Vacuum V8
+   ID:       123456789
+   IP:       192.168.1.50                       <-- ADRES IP
+   TOKEN:    476446704a43794762516a4958474246   <-- 32-ZNAKOWY TOKEN
+   MODEL:    viomi.vacuum.v8
+   ----------------------------------------------------
+   ```
+3. Skopiuj wartości **IP** oraz **TOKEN** — będą potrzebne w kolejnym kroku.
+
+> 💡 **Wskazówka:** Zaleca się przypisanie odkurzaczowi stałego adresu IP w ustawieniach routera (funkcja *DHCP Static Lease* / *IP Reservation*), aby adres IP nie uległ zmianie po restarcie sieci.
+
+---
+
 ## 📱 Konfiguracja w aplikacji SmartThings
 
-Po dodaniu urządzenia na hubie:
+Po dodaniu urządzenia na hubie (poprzez opcję *Skanuj w pobliżu*):
 1. Otwórz aplikację **SmartThings** na smartfonie.
 2. Wejdź w nowo dodane urządzenie **Viomi Vacuum V8**.
 3. Kliknij menu trzech kropek (**`⋮`**) w prawym górnym rogu -> **Ustawienia** (*Settings*).
 4. Wypełnij pola konfiguracyjne:
-   - **Adres IP:** Wpisz adres IP odkurzacza w Twojej sieci domowej (np. `192.168.1.50`).
-   - **Token urządzenia:** Wklej 32-znakowy klucz szesnastkowy (hex).
+   - **Adres IP:** Wpisz adres IP odkurzacza (uzyskany z ekstraktora, np. `192.168.1.50`).
+   - **Token urządzenia:** Wklej 32-znakowy token (uzyskany z ekstraktora).
    - **Interwał odpytywania (s):** Domyślnie `30` sekund (zakres od `10` do `300`).
    - **Akcja po wyłączeniu:** Wybierz, co odkurzacz ma zrobić po kliknięciu wyłączenia (*Powrót do bazy*, *Zatrzymanie*, *Wstrzymanie*).
    - **Tryb pracy mopa:** *Automatycznie (wg pojemnika)* lub wybrany tryb stały.
 5. Naciśnij **Zapisz** (*Save*).
 
-Po zapisaniu ustawień hub natychmiast połączy się z robotem, pobierze stan baterii i aktualny status pracy.
+Po zapisaniu ustawień hub natychmiast połączy się z robotem w sieci lokalnej, pobierze stan baterii i aktualny status pracy.
 
 ---
 
@@ -120,6 +165,7 @@ Viomi Vacuum V8 Edge Driver/
 Projekt powstał w oparciu o analizę i doświadczenia społeczności:
 - **[smartthings-miot-edge-driver](https://github.com/wonjj6768/smartthings-miot-edge-driver)** autorstwa @wonjj6768 – za implementację protokołu miIO w czystym Lua dla SmartThings Edge.
 - **[home-assistant-viomi-vacuum-v8](https://github.com/saprumohit/home-assistant-viomi-vacuum-v8)** autorstwa @saprumohit – za mapowanie rejestrów i komend dla odkurzacza Viomi V8.
+- **[xiaomi-cloud-tokens-extractor](https://github.com/piotrmachowski/xiaomi-cloud-tokens-extractor)** autorstwa @piotrmachowski – za narzędzie do łatwego pozyskiwania tokenów urządzeń Xiaomi/Viomi.
 - **[python-miio](https://github.com/rytilahti/python-miio)** – za dokumentację protokołu komunikacyjnego Viomi.
 
 ---
