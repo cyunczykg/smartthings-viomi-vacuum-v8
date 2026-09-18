@@ -31,19 +31,23 @@ Możesz zainstalować sterownik bezpośrednio na swoim hubie SmartThings jednym 
     - Jeśli zaznaczono konkretne pokoje (np. Kuchnia i Salon) -> robot posprząta tylko wybrane pokoje.
     - Jeśli żaden pokój lub wszystkie są zaznaczone -> robot posprząta całe mieszkanie.
   - Wyłączenie przełącznika (`Switch OFF`) wykonuje wybraną akcję (domyślnie: powrót do bazy i ładowanie, zatrzymanie w miejscu lub pauza).
-- **Sprzątanie wybranych pokojów (Room Cleaning):**
-  - Obsługa do 8 niezależnych stref/pokojów (np. *Kuchnia, Salon, Korytarz, Sypialnia, Pokój Kasi, Pokój Maćka, Łazienka*).
-  - Wygodne przełączniki wyboru pokojów na kafelku urządzenia.
-  - Po zakończeniu sprzątania przełączniki pokojów automatycznie powracają do pozycji wyłączonej.
+- **Powrót do bazy (Zawsze pod ręką):**
+  - Dedykowany przycisk **Powrót do bazy** umieszczony bezpośrednio w głównym kafelku sterowania.
+  - Standardowe przyciski systemowe SmartThings (`robotCleanerOperatingState`): **Start**, **Wstrzymaj**, **Wróć** (powrót do stacji).
+- **Wybór pokojów (Room Cleaning) w stylu sekcji Sprzątanie:**
+  - Nowoczesna, kompaktowa **siatka przycisków w układzie 2-kolumnowym** (dokładnie jak w sekcji *Sprzątanie*), bez zbędnych, rozciągniętych kafelków:
+    - `[ Kuchnia ]` `[ Salon ]`
+    - `[ Korytarz ]` `[ Sypialnia ]`
+    - `[ Pokój Kasi ]` `[ Pokój Maćka ]`
+    - `[ Łazienka ]` `[ Pokój 8 ]`
+    - `[ Wszystkie pokoje ]` `[ Odznacz wszystko ]`
+    - `[ ▶ Start odkurzania ]`
+  - **Wybór wielokrotny:** Możliwość zaznaczenia dowolnej liczby pokoi naraz (np. Kuchnia + Salon) przed uruchomieniem sprzątania.
+  - **Podgląd na żywo:** Dynamiczny wskaźnik tekstowy *Wybrane do odkurzenia* (np. `Kuchnia, Salon` lub `Brak (całe mieszkanie)`).
+  - Po powrocie do bazy i zakończeniu odkurzania zaznaczone pokoje automatycznie resetują się do stanu początkowego.
   - Możliwość edycji nazw pokojów w ustawieniach urządzenia (*Ustawienia -> Nazwa: Pokój 1..8*).
-- **Szybkie akcje (`momentary`):**
-  - **Odkurz wszystko:** Zaznacza wszystkie pokoje i natychmiast wysyła komendę pełnego sprzątania całego mieszkania.
-  - **Odznacz wszystko:** Błyskawicznie odznacza wszystkie wybrane pokoje jednym kliknięciem.
-  - **Wczytaj pokoje z odkurzacza:** Pobiera z pamięci robota (`get_ordertime`) nazwy i identyfikatory pokojów zdefiniowane na mapie w aplikacji Xiaomi Home.
-  - **Powrót do bazy:** Dedykowany przycisk powrotu do stacji ładującej.
-  - **Zlokalizuj odkurzacz:** Wywołanie sygnału dźwiękowego w robocie, aby łatwo go odnaleźć.
-- **Stałe etykiety sekcji:**
-  - Sekcje funkcyjne posiadają stałe nazwy bez zbędnej ikony ołówka edycji w SmartThings.
+- **Zlokalizuj odkurzacz (`fluteriver09555.vacuumLocate`):**
+  - Dedykowany przycisk wywołania sygnału dźwiękowego w robocie, by łatwo go odnaleźć.
 - **Stan baterii (`battery`):** Odczyt poziomu naładowania w procentach (`0–100%`).
 - **Tryb ruchu i pracy (`robotCleanerMovement` / `robotCleanerCleaningMode`):**
   - Odzwierciedlenie stanów odkurzacza: `Bezczynny`, `Sprzątanie`, `Wstrzymany`, `Powrót do bazy` (`homing`), `Ładowanie` (`charging`).
@@ -125,17 +129,20 @@ Po zapisaniu ustawień hub natychmiast połączy się z robotem w sieci lokalnej
 
 ### 🧹 Sprzątanie wybranych pokojów (Room Cleaning)
 
-1. **Sprzątanie wybranego pokoju lub kilku:**
-   - Włącz przełącznik wybranego pokoju (np. *Kuchnia* oraz *Salon*).
-   - Włącz główny przełącznik odkurzacza (**Włącz / ON**). Robot pojedzie posprzątać tylko zaznaczone pokoje.
-   - Po powrocie do bazy przełączniki pokojów samoczynnie wrócą do pozycji wyłączonej.
-2. **Szybkie akcje:**
-   - Kliknięcie **Odkurz wszystko** zaznacza wszystkie pokoje i natychmiast wysyła polecenie odkurzania całego mieszkania.
-   - Kliknięcie **Odznacz wszystko** natychmiast wyłącza zaznaczenia wszystkich pokojów.
-3. **Synchronizacja pokojów z mapy robota (`Wczytaj pokoje z odkurzacza`):**
-   - W protokole Viomi robot przechowuje nazwy i identyfikatory pokojów w pamięci harmonogramów (`get_ordertime`).
-   - Aby sterownik automatycznie wczytał identyfikatory z odkurzacza, wystarczy w oficjalnej aplikacji **Xiaomi Home** utworzyć jeden harmonogram (np. na dowolną godzinę, może być nieaktywny/wyłączony), wybierając w nim opcję *Sprzątaj wg pokoju* i zaznaczając wszystkie pokoje.
-   - Następnie w SmartThings kliknij przycisk **Wczytaj pokoje z odkurzacza** – sterownik odczyta nazwy i numery stref bezpośrednio z pamięci urządzenia!
+1. **Wybór pokojów do posprzątania:**
+   - W sekcji **Wybór pokoi** kliknij przyciski stref, które chcesz odkurzyć (np. `[ Kuchnia ]` oraz `[ Salon ]`).
+   - Wskaźnik tekstowy *Wybrane do odkurzenia* natychmiast pokaże listę wybranych pomieszczeń: `Kuchnia, Salon`.
+   - Ponowne kliknięcie pokoju odznacza go z listy.
+   - Kliknięcie `[ Odznacz wszystko ]` resetuje wybór do całego mieszkania.
+   - Kliknięcie `[ Wszystkie pokoje ]` zaznacza cały dom.
+2. **Start odkurzania:**
+   - Kliknij przycisk `[ ▶ Start odkurzania ]` bezpośrednio w sekcji pokoi, LUB
+   - Włącz główny przełącznik odkurzacza (**Włącz / ON**), LUB
+   - Kliknij **Start** w sekcji stanu robota.
+   - Robot natychmiast wyruszy posprzątać tylko wybrane strefy.
+   - Po powrocie do bazy wskaźnik automatycznie resetuje się do stanu początkowego.
+3. **Powrót do bazy:**
+   - Dostępny bezpośrednio w kafelku przycisk **Powrót do bazy** lub systemowy przycisk **Wróć** natychmiast odsyła robota do stacji dokującej.
 
 ---
 

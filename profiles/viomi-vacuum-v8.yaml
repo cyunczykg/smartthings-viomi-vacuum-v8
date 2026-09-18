@@ -8,117 +8,21 @@ components:
     version: 1
   - id: robotCleanerMovement
     version: 1
+  - id: robotCleanerOperatingState
+    version: 1
+  - id: fluteriver09555.vacuumDock
+    version: 1
+  - id: fluteriver09555.vacuumRoomSelector
+    version: 1
   - id: robotCleanerCleaningMode
     version: 1
   - id: robotCleanerTurboMode
     version: 1
   - id: fanSpeed
     version: 1
+  - id: fluteriver09555.vacuumLocate
+    version: 1
   - id: refresh
-    version: 1
-  categories:
-  - name: RobotCleaner
-
-- id: selectAll
-  label: "Odkurz wszystko"
-  capabilities:
-  - id: momentary
-    version: 1
-  categories:
-  - name: RobotCleaner
-
-- id: deselectAll
-  label: "Odznacz wszystko"
-  capabilities:
-  - id: momentary
-    version: 1
-  categories:
-  - name: RobotCleaner
-
-- id: syncRooms
-  label: "Wczytaj pokoje z odkurzacza"
-  capabilities:
-  - id: momentary
-    version: 1
-  categories:
-  - name: RobotCleaner
-
-- id: dock
-  label: "Powrót do bazy"
-  capabilities:
-  - id: momentary
-    version: 1
-  categories:
-  - name: RobotCleaner
-
-- id: locate
-  label: "Zlokalizuj odkurzacz"
-  capabilities:
-  - id: momentary
-    version: 1
-  categories:
-  - name: RobotCleaner
-
-- id: room1
-  label: "Kuchnia"
-  capabilities:
-  - id: switch
-    version: 1
-  categories:
-  - name: RobotCleaner
-
-- id: room2
-  label: "Salon"
-  capabilities:
-  - id: switch
-    version: 1
-  categories:
-  - name: RobotCleaner
-
-- id: room3
-  label: "Korytarz"
-  capabilities:
-  - id: switch
-    version: 1
-  categories:
-  - name: RobotCleaner
-
-- id: room4
-  label: "Sypialnia"
-  capabilities:
-  - id: switch
-    version: 1
-  categories:
-  - name: RobotCleaner
-
-- id: room5
-  label: "Pokój Kasi"
-  capabilities:
-  - id: switch
-    version: 1
-  categories:
-  - name: RobotCleaner
-
-- id: room6
-  label: "Pokój Maćka"
-  capabilities:
-  - id: switch
-    version: 1
-  categories:
-  - name: RobotCleaner
-
-- id: room7
-  label: "Łazienka"
-  capabilities:
-  - id: switch
-    version: 1
-  categories:
-  - name: RobotCleaner
-
-- id: room8
-  label: "Pokój 8"
-  capabilities:
-  - id: switch
     version: 1
   categories:
   - name: RobotCleaner
@@ -156,6 +60,15 @@ deviceConfig:
       capability: robotCleanerMovement
       version: 1
     - component: main
+      capability: robotCleanerOperatingState
+      version: 1
+    - component: main
+      capability: fluteriver09555.vacuumDock
+      version: 1
+    - component: main
+      capability: fluteriver09555.vacuumRoomSelector
+      version: 1
+    - component: main
       capability: robotCleanerCleaningMode
       version: 1
     - component: main
@@ -164,44 +77,8 @@ deviceConfig:
     - component: main
       capability: fanSpeed
       version: 1
-    - component: selectAll
-      capability: momentary
-      version: 1
-    - component: deselectAll
-      capability: momentary
-      version: 1
-    - component: syncRooms
-      capability: momentary
-      version: 1
-    - component: dock
-      capability: momentary
-      version: 1
-    - component: locate
-      capability: momentary
-      version: 1
-    - component: room1
-      capability: switch
-      version: 1
-    - component: room2
-      capability: switch
-      version: 1
-    - component: room3
-      capability: switch
-      version: 1
-    - component: room4
-      capability: switch
-      version: 1
-    - component: room5
-      capability: switch
-      version: 1
-    - component: room6
-      capability: switch
-      version: 1
-    - component: room7
-      capability: switch
-      version: 1
-    - component: room8
-      capability: switch
+    - component: main
+      capability: fluteriver09555.vacuumLocate
       version: 1
     - component: main
       capability: refresh
@@ -218,6 +95,12 @@ deviceConfig:
         capability: robotCleanerMovement
         version: 1
       - component: main
+        capability: robotCleanerOperatingState
+        version: 1
+      - component: main
+        capability: fluteriver09555.vacuumRoomSelector
+        version: 1
+      - component: main
         capability: robotCleanerCleaningMode
         version: 1
       - component: main
@@ -225,37 +108,19 @@ deviceConfig:
         version: 1
       - component: main
         capability: fanSpeed
-        version: 1
-      - component: room1
-        capability: switch
-        version: 1
-      - component: room2
-        capability: switch
-        version: 1
-      - component: room3
-        capability: switch
-        version: 1
-      - component: room4
-        capability: switch
-        version: 1
-      - component: room5
-        capability: switch
-        version: 1
-      - component: room6
-        capability: switch
-        version: 1
-      - component: room7
-        capability: switch
-        version: 1
-      - component: room8
-        capability: switch
         version: 1
     actions:
       - component: main
         capability: switch
         version: 1
       - component: main
-        capability: robotCleanerMovement
+        capability: robotCleanerOperatingState
+        version: 1
+      - component: main
+        capability: fluteriver09555.vacuumDock
+        version: 1
+      - component: main
+        capability: fluteriver09555.vacuumRoomSelector
         version: 1
       - component: main
         capability: robotCleanerCleaningMode
@@ -266,44 +131,8 @@ deviceConfig:
       - component: main
         capability: fanSpeed
         version: 1
-      - component: selectAll
-        capability: momentary
-        version: 1
-      - component: deselectAll
-        capability: momentary
-        version: 1
-      - component: syncRooms
-        capability: momentary
-        version: 1
-      - component: dock
-        capability: momentary
-        version: 1
-      - component: locate
-        capability: momentary
-        version: 1
-      - component: room1
-        capability: switch
-        version: 1
-      - component: room2
-        capability: switch
-        version: 1
-      - component: room3
-        capability: switch
-        version: 1
-      - component: room4
-        capability: switch
-        version: 1
-      - component: room5
-        capability: switch
-        version: 1
-      - component: room6
-        capability: switch
-        version: 1
-      - component: room7
-        capability: switch
-        version: 1
-      - component: room8
-        capability: switch
+      - component: main
+        capability: fluteriver09555.vacuumLocate
         version: 1
 
 preferences:
@@ -323,29 +152,29 @@ preferences:
   definition:
     stringType: text
     default: ""
-- name: pollingInterval
-  title: "Interwał odpytywania (s)"
-  description: "Częstotliwość sprawdzania statusu odkurzacza (domyślnie 30s)"
+- name: pollInterval
+  title: "Interwał odpytywania (sekundy)"
+  description: "Częstotliwość odpytywania stanu odkurzacza w sekundach"
   required: false
   preferenceType: integer
   definition:
     minimum: 10
     maximum: 300
     default: 30
-- name: offAction
-  title: "Akcja po wyłączeniu (Off)"
-  description: "Co ma zrobić odkurzacz po wyłączeniu przełącznika głównego"
+- name: switchOffAction
+  title: "Akcja po wyłączeniu (Switch OFF)"
+  description: "Działanie wykonywane po kliknięciu wyłączenia odkurzacza"
   required: false
   preferenceType: enumeration
   definition:
     options:
-      dock: "Powrót do bazy (Ładowanie)"
-      stop: "Zatrzymanie (Stop)"
-      pause: "Wstrzymanie (Pauza)"
+      dock: "Powrót do bazy i ładowanie"
+      stop: "Zatrzymanie w miejscu"
+      pause: "Wstrzymanie sprzątania (Pauza)"
     default: "dock"
 - name: mopMode
   title: "Tryb pracy mopa"
-  description: "Wybór trybu odkurzania/mopowania"
+  description: "Wymuś tryb mopowania lub pozostaw automatyczne wykrywanie"
   required: false
   preferenceType: enumeration
   definition:

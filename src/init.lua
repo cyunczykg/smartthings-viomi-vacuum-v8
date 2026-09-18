@@ -10,15 +10,20 @@ local STATUS_CACHE = "viomi_status_cache"
 local FAIL_COUNT = "viomi_fail_count"
 local DEFAULT_POLLING_INTERVAL = 30
 
-local ROOM_COMPONENTS = {
-    { key = "room1", default_name = "Kuchnia", default_id = 10 },
-    { key = "room2", default_name = "Salon", default_id = 11 },
-    { key = "room3", default_name = "Korytarz", default_id = 12 },
-    { key = "room4", default_name = "Sypialnia", default_id = 13 },
-    { key = "room5", default_name = "Pokój Kasi", default_id = 14 },
-    { key = "room6", default_name = "Pokój Maćka", default_id = 15 },
-    { key = "room7", default_name = "Łazienka", default_id = 16 },
-    { key = "room8", default_name = "Pokój 8", default_id = 17 }
+-- Custom capabilities
+local VACUUM_DOCK_CAP = capabilities["fluteriver09555.vacuumDock"]
+local ROOM_SELECTOR_CAP = capabilities["fluteriver09555.vacuumRoomSelector"]
+local VACUUM_LOCATE_CAP = capabilities["fluteriver09555.vacuumLocate"]
+
+local ROOM_DEF = {
+    { key = "kitchen",  pref = "room1Name", default_name = "Kuchnia",     default_id = 10 },
+    { key = "living",   pref = "room2Name", default_name = "Salon",       default_id = 11 },
+    { key = "hallway",  pref = "room3Name", default_name = "Korytarz",    default_id = 12 },
+    { key = "bedroom",  pref = "room4Name", default_name = "Sypialnia",   default_id = 13 },
+    { key = "kate",     pref = "room5Name", default_name = "Pokój Kasi",  default_id = 14 },
+    { key = "maciek",   pref = "room6Name", default_name = "Pokój Maćka", default_id = 15 },
+    { key = "bathroom", pref = "room7Name", default_name = "Łazienka",    default_id = 16 },
+    { key = "room8",    pref = "room8Name", default_name = "Pokój 8",     default_id = 17 }
 }
 
 local function get_device_config(device)
@@ -32,25 +37,33 @@ local function get_device_config(device)
     return nil, nil
 end
 
-local function get_room_id(device, room_key)
-    local detected = device:get_field("detected_room_ids")
-    if detected and detected[room_key] then
-        return detected[room_key]
-    end
-    for _, rc in ipairs(ROOM_COMPONENTS) do
-        if rc.key == room_key then
-            return rc.default_id
+local function update_room_selector(device, last_action)
+    local selected = device:get_field("selected_room_keys") or {}
+    local names = {}
+    local count = 0
+
+    for _, r in ipairs(ROOM_DEF) do
+        if selected[r.key] then
+            count = count + 1
+            local custom_name = device.preferences[r.pref]
+            local name = (custom_name and custom_name ~= "") and custom_name or r.default_name
+            table.insert(names, name)
         end
     end
-    return 10
-end
 
-local function reset_room_switches(device)
-    for _, rc in ipairs(ROOM_COMPONENTS) do
-        device:set_field("room_state_" .. rc.key, false)
-        local comp = device.profile.components[rc.key]
-        if comp then
-            device:emit_component_event(comp, capabilities.switch.switch.off())
+    local summary
+    if count == 0 then
+        summary = "Brak (całe mieszkanie)"
+    elseif count == #ROOM_DEF then
+        summary = "Wszystkie pokoje"
+    else
+        summary = table.concat(names, ", ")
+    end
+
+    if ROOM_SELECTOR_CAP then
+        device:emit_event(ROOM_SELECTOR_CAP.selectedRooms({ value = summary }))
+        if last_action then
+            device:emit_event(ROOM_SELECTOR_CAP.lastSelectedRoom({ value = last_action }))
         end
     end
 end
@@ -61,44 +74,50 @@ local function emit_vacuum_status(device, status)
     local prev_cache = device:get_field(STATUS_CACHE)
     local prev_state = prev_cache and prev_cache.run_state
 
-    -- 1. Battery level
+    -- 1. Poziom baterii
     if status.battary_life and status.battary_life >= 0 and status.battary_life <= 100 then
         device:emit_event(capabilities.battery.battery({ value = status.battary_life }))
     end
 
-    -- 2. Operational state & Switch & Movement & Mode
+    -- 2. Stan pracy & Przełącznik & Ruch & OperatingState
     local rs = status.run_state
     if rs == viomi.RUN_STATE.CLEANING or rs == viomi.RUN_STATE.VACUUM_MOP or rs == viomi.RUN_STATE.MOP_ONLY then
         device:emit_event(capabilities.switch.switch.on())
         device:emit_event(capabilities.robotCleanerCleaningMode.robotCleanerCleaningMode.auto())
         device:emit_event(capabilities.robotCleanerMovement.robotCleanerMovement.idle())
+        device:emit_event(capabilities.robotCleanerOperatingState.operatingState.running())
     elseif rs == viomi.RUN_STATE.PAUSED then
         device:emit_event(capabilities.switch.switch.off())
         device:emit_event(capabilities.robotCleanerCleaningMode.robotCleanerCleaningMode.part())
-        device:emit_event(capabilities.robotCleanerMovement.robotCleanerMovement.idle())
+        device:emit_event(capabilities.robotCleanerMovement.robotCleanerMovement.pause())
+        device:emit_event(capabilities.robotCleanerOperatingState.operatingState.paused())
     elseif rs == viomi.RUN_STATE.RETURNING then
         device:emit_event(capabilities.switch.switch.off())
         device:emit_event(capabilities.robotCleanerMovement.robotCleanerMovement.homing())
+        device:emit_event(capabilities.robotCleanerOperatingState.operatingState.seekingCharger())
         device:emit_event(capabilities.robotCleanerCleaningMode.robotCleanerCleaningMode.stop())
     elseif rs == viomi.RUN_STATE.DOCKED then
         device:emit_event(capabilities.switch.switch.off())
         device:emit_event(capabilities.robotCleanerMovement.robotCleanerMovement.charging())
+        device:emit_event(capabilities.robotCleanerOperatingState.operatingState.charging())
         device:emit_event(capabilities.robotCleanerCleaningMode.robotCleanerCleaningMode.stop())
     else -- IDLE
         device:emit_event(capabilities.switch.switch.off())
         device:emit_event(capabilities.robotCleanerMovement.robotCleanerMovement.idle())
+        device:emit_event(capabilities.robotCleanerOperatingState.operatingState.docked())
         device:emit_event(capabilities.robotCleanerCleaningMode.robotCleanerCleaningMode.stop())
     end
 
-    -- Reset room selections when cleaning finishes and vacuum docks/idles
+    -- Resetowanie zaznaczenia pokojów po zakończeniu sprzątania i powrocie do bazy
     if prev_state and (prev_state == viomi.RUN_STATE.CLEANING or prev_state == viomi.RUN_STATE.VACUUM_MOP or prev_state == viomi.RUN_STATE.MOP_ONLY or prev_state == viomi.RUN_STATE.RETURNING) then
         if rs == viomi.RUN_STATE.DOCKED or rs == viomi.RUN_STATE.IDLE_0 or rs == viomi.RUN_STATE.IDLE_1 then
             log.info(string.format("[%s] Sprzątanie zakończone. Resetowanie zaznaczenia pokojów...", device.label))
-            reset_room_switches(device)
+            device:set_field("selected_room_keys", {})
+            update_room_selector(device, "none")
         end
     end
 
-    -- 3. Fan speed & Turbo mode
+    -- 3. Prędkość wentylatora & Turbo
     if status.suction_grade and status.suction_grade >= 0 and status.suction_grade <= 3 then
         device:emit_event(capabilities.fanSpeed.fanSpeed(status.suction_grade))
         if status.suction_grade == viomi.FAN_SPEEDS.TURBO then
@@ -152,55 +171,41 @@ local function start_polling_timer(device)
     device:set_field(POLLING_TIMER, timer)
 end
 
--- Capability handlers
+-- Akcje sterowania odkurzaczem
 
-local function switch_on_handler(_, device, command)
-    local comp_id = command.component_id
-
-    -- Obsługa włączenia konkretnego pokoju (zaznaczenie)
-    if comp_id and comp_id:match("^room%d+") then
-        log.info(string.format("[%s] Zaznaczono pokój: %s", device.label, comp_id))
-        device:set_field("room_state_" .. comp_id, true)
-        local comp = device.profile.components[comp_id]
-        if comp then
-            device:emit_component_event(comp, capabilities.switch.switch.on())
-        end
+local function start_vacuum_cleaning(device)
+    local ip, token = get_device_config(device)
+    if not ip or not token then
+        log.error("Nie można uruchomić odkurzacza: brak IP lub Tokena")
         return
     end
 
-    -- Obsługa włączenia głównego przełącznika (Start)
-    local ip, token = get_device_config(device)
-    if not ip or not token then
-        log.error("Cannot start vacuum: IP or Token not configured")
-        return
+    local selected = device:get_field("selected_room_keys") or {}
+    local ids = {}
+    local detected = device:get_field("detected_room_ids") or {}
+
+    for _, r in ipairs(ROOM_DEF) do
+        if selected[r.key] then
+            local r_id = detected[r.key] or r.default_id
+            table.insert(ids, r_id)
+        end
     end
 
     local cache = device:get_field(STATUS_CACHE)
     local mop_pref = device.preferences.mopMode
 
-    -- Sprawdzenie, które pokoje są zaznaczone
-    local selected_ids = {}
-    local selected_names = {}
-    for _, rc in ipairs(ROOM_COMPONENTS) do
-        if device:get_field("room_state_" .. rc.key) == true then
-            local r_id = get_room_id(device, rc.key)
-            table.insert(selected_ids, r_id)
-            local pref_name = device.preferences[rc.key .. "Name"] or rc.default_name
-            table.insert(selected_names, pref_name)
-        end
-    end
-
-    if #selected_ids > 0 and #selected_ids < #ROOM_COMPONENTS then
-        log.info(string.format("[%s] Uruchamianie sprzątania wybranych pokojów: %s (IDs: %s)",
-            device.label, table.concat(selected_names, ", "), table.concat(selected_ids, ", ")))
-        viomi.clean_rooms(device, ip, token, cache, mop_pref, selected_ids)
-    else
-        log.info(string.format("[%s] Uruchamianie sprzątania całościowego (brak konkretnych pokojów)", device.label))
+    if #ids == 0 or #ids == #ROOM_DEF then
+        log.info(string.format("[%s] Start: Odkurzanie całego mieszkania", device.label))
         viomi.clean_rooms(device, ip, token, cache, mop_pref, nil)
+    else
+        log.info(string.format("[%s] Start: Odkurzanie %d wybranych pokojów (ID: %s)",
+            device.label, #ids, table.concat(ids, ", ")))
+        viomi.clean_rooms(device, ip, token, cache, mop_pref, ids)
     end
 
     device:emit_event(capabilities.switch.switch.on())
     device:emit_event(capabilities.robotCleanerCleaningMode.robotCleanerCleaningMode.auto())
+    device:emit_event(capabilities.robotCleanerOperatingState.operatingState.running())
     device:emit_event(capabilities.robotCleanerMovement.robotCleanerMovement.idle())
 
     device.thread:call_with_delay(2, function()
@@ -208,95 +213,165 @@ local function switch_on_handler(_, device, command)
     end)
 end
 
-local function switch_off_handler(_, device, command)
-    local comp_id = command.component_id
-
-    -- Obsługa wyłączenia konkretnego pokoju (odznaczenie)
-    if comp_id and comp_id:match("^room%d+") then
-        log.info(string.format("[%s] Odznaczono pokój: %s", device.label, comp_id))
-        device:set_field("room_state_" .. comp_id, false)
-        local comp = device.profile.components[comp_id]
-        if comp then
-            device:emit_component_event(comp, capabilities.switch.switch.off())
-        end
+local function dock_vacuum(device)
+    local ip, token = get_device_config(device)
+    if not ip or not token then
+        log.error("Nie można odesłać do bazy: brak IP lub Tokena")
         return
     end
 
-    -- Obsługa wyłączenia głównego przełącznika (Stop / Dock)
+    log.info(string.format("[%s] Akcja: Powrót do bazy", device.label))
+    viomi.return_to_dock(device, ip, token)
+
+    device:emit_event(capabilities.switch.switch.off())
+    device:emit_event(capabilities.robotCleanerMovement.robotCleanerMovement.homing())
+    device:emit_event(capabilities.robotCleanerOperatingState.operatingState.seekingCharger())
+    device:emit_event(capabilities.robotCleanerCleaningMode.robotCleanerCleaningMode.stop())
+
+    device:set_field("selected_room_keys", {})
+    update_room_selector(device, "none")
+
+    device.thread:call_with_delay(2, function()
+        pcall(poll_device_status, device)
+    end)
+end
+
+local function pause_vacuum(device)
     local ip, token = get_device_config(device)
     if not ip or not token then return end
 
+    log.info(string.format("[%s] Akcja: Wstrzymanie odkurzacza (Pauza)", device.label))
     local cache = device:get_field(STATUS_CACHE)
-    local off_action = device.preferences.offAction or "dock"
+    viomi.pause_cleaning(device, ip, token, cache)
 
+    device:emit_event(capabilities.switch.switch.off())
+    device:emit_event(capabilities.robotCleanerMovement.robotCleanerMovement.pause())
+    device:emit_event(capabilities.robotCleanerOperatingState.operatingState.paused())
+
+    device.thread:call_with_delay(2, function()
+        pcall(poll_device_status, device)
+    end)
+end
+
+local function stop_vacuum(device)
+    local ip, token = get_device_config(device)
+    if not ip or not token then return end
+
+    log.info(string.format("[%s] Akcja: Zatrzymanie odkurzacza w miejscu", device.label))
+    local cache = device:get_field(STATUS_CACHE)
+    viomi.stop_cleaning(device, ip, token, cache)
+
+    device:emit_event(capabilities.switch.switch.off())
+    device:emit_event(capabilities.robotCleanerMovement.robotCleanerMovement.idle())
+    device:emit_event(capabilities.robotCleanerOperatingState.operatingState.stopped())
+    device:emit_event(capabilities.robotCleanerCleaningMode.robotCleanerCleaningMode.stop())
+
+    device.thread:call_with_delay(2, function()
+        pcall(poll_device_status, device)
+    end)
+end
+
+-- Obsługa przełącznika głównego (Switch ON/OFF)
+local function switch_on_handler(_, device, _)
+    start_vacuum_cleaning(device)
+end
+
+local function switch_off_handler(_, device, _)
+    local off_action = device.preferences.switchOffAction or "dock"
     if off_action == "stop" then
-        viomi.stop_cleaning(device, ip, token, cache)
-        device:emit_event(capabilities.switch.switch.off())
-        device:emit_event(capabilities.robotCleanerCleaningMode.robotCleanerCleaningMode.stop())
-        device:emit_event(capabilities.robotCleanerMovement.robotCleanerMovement.idle())
+        stop_vacuum(device)
     elseif off_action == "pause" then
-        viomi.pause_cleaning(device, ip, token, cache)
-        device:emit_event(capabilities.switch.switch.off())
-        device:emit_event(capabilities.robotCleanerMovement.robotCleanerMovement.idle())
+        pause_vacuum(device)
     else -- "dock"
-        viomi.return_to_dock(device, ip, token)
-        device:emit_event(capabilities.switch.switch.off())
-        device:emit_event(capabilities.robotCleanerMovement.robotCleanerMovement.homing())
-        device:emit_event(capabilities.robotCleanerCleaningMode.robotCleanerCleaningMode.stop())
+        dock_vacuum(device)
     end
-
-    device.thread:call_with_delay(2, function()
-        pcall(poll_device_status, device)
-    end)
 end
 
+-- Obsługa custom capability: Wybór pokoi (fluteriver09555.vacuumRoomSelector)
+local function select_room_handler(_, device, command)
+    local room = command.args.room
+    log.info(string.format("[%s] Interakcja z wyborem pokoju: %s", device.label, tostring(room)))
+
+    local selected = device:get_field("selected_room_keys") or {}
+
+    if room == "clear" then
+        selected = {}
+        device:set_field("selected_room_keys", selected)
+        update_room_selector(device, "clear")
+
+    elseif room == "all" then
+        selected = {}
+        for _, r in ipairs(ROOM_DEF) do
+            selected[r.key] = true
+        end
+        device:set_field("selected_room_keys", selected)
+        update_room_selector(device, "all")
+
+    elseif room == "start" then
+        update_room_selector(device, "start")
+        start_vacuum_cleaning(device)
+
+    else
+        -- Przełączanie stanu pojedynczego pokoju (toggle)
+        if selected[room] then
+            selected[room] = nil
+        else
+            selected[room] = true
+        end
+        device:set_field("selected_room_keys", selected)
+        update_room_selector(device, room)
+    end
+end
+
+-- Obsługa custom capability: Powrót do bazy (fluteriver09555.vacuumDock)
+local function custom_dock_handler(_, device, _)
+    dock_vacuum(device)
+end
+
+-- Obsługa custom capability: Zlokalizuj odkurzacz (fluteriver09555.vacuumLocate)
+local function custom_locate_handler(_, device, _)
+    local ip, token = get_device_config(device)
+    if not ip or not token then return end
+    log.info(string.format("[%s] Akcja: Zlokalizuj odkurzacz (sygnał dźwiękowy)", device.label))
+    viomi.locate(device, ip, token)
+end
+
+-- Obsługa standardowego robotCleanerOperatingState (Start, Pause, GoHome)
+local function op_state_start_handler(_, device, _)
+    start_vacuum_cleaning(device)
+end
+
+local function op_state_pause_handler(_, device, _)
+    pause_vacuum(device)
+end
+
+local function op_state_gohome_handler(_, device, _)
+    dock_vacuum(device)
+end
+
+-- Obsługa robotCleanerMovement
 local function movement_handler(_, device, command)
-    local ip, token = get_device_config(device)
-    if not ip or not token then return end
-
     local move = command.args.movement
-    local cache = device:get_field(STATUS_CACHE)
-
     if move == "homing" or move == "charging" then
-        viomi.return_to_dock(device, ip, token)
-        device:emit_event(capabilities.robotCleanerMovement.robotCleanerMovement.homing())
-        device:emit_event(capabilities.switch.switch.off())
-        device:emit_event(capabilities.robotCleanerCleaningMode.robotCleanerCleaningMode.stop())
+        dock_vacuum(device)
     elseif move == "idle" then
-        viomi.stop_cleaning(device, ip, token, cache)
-        device:emit_event(capabilities.robotCleanerMovement.robotCleanerMovement.idle())
-        device:emit_event(capabilities.switch.switch.off())
+        stop_vacuum(device)
+    elseif move == "pause" then
+        pause_vacuum(device)
     end
-
-    device.thread:call_with_delay(2, function()
-        pcall(poll_device_status, device)
-    end)
 end
 
+-- Obsługa robotCleanerCleaningMode
 local function cleaning_mode_handler(_, device, command)
-    local ip, token = get_device_config(device)
-    if not ip or not token then return end
-
     local mode = command.args.mode
-    local cache = device:get_field(STATUS_CACHE)
-
     if mode == "auto" or mode == "repeat" then
-        local mop_pref = device.preferences.mopMode
-        viomi.start_cleaning(device, ip, token, cache, mop_pref)
-        device:emit_event(capabilities.switch.switch.on())
-        device:emit_event(capabilities.robotCleanerCleaningMode.robotCleanerCleaningMode(mode))
+        start_vacuum_cleaning(device)
     elseif mode == "stop" then
-        viomi.stop_cleaning(device, ip, token, cache)
-        device:emit_event(capabilities.switch.switch.off())
-        device:emit_event(capabilities.robotCleanerCleaningMode.robotCleanerCleaningMode.stop())
-        device:emit_event(capabilities.robotCleanerMovement.robotCleanerMovement.idle())
+        stop_vacuum(device)
     end
-
-    device.thread:call_with_delay(2, function()
-        pcall(poll_device_status, device)
-    end)
 end
 
+-- Obsługa regulacji mocy ssania (Fan Speed & Turbo)
 local function fan_speed_handler(_, device, command)
     local ip, token = get_device_config(device)
     if not ip or not token then return end
@@ -328,89 +403,12 @@ local function turbo_mode_handler(_, device, command)
     end
 end
 
-local function momentary_handler(_, device, command)
-    local comp_id = command.component_id
-    local ip, token = get_device_config(device)
-    if not ip or not token then
-        log.error("Cannot perform action: IP or Token not configured")
-        return
-    end
-
-    if comp_id == "selectAll" then
-        log.info(string.format("[%s] Akcja: Odkurz wszystko (zaznaczanie wszystkich pokojów i całościowy start)", device.label))
-        for _, rc in ipairs(ROOM_COMPONENTS) do
-            device:set_field("room_state_" .. rc.key, true)
-            local comp = device.profile.components[rc.key]
-            if comp then
-                device:emit_component_event(comp, capabilities.switch.switch.on())
-            end
-        end
-
-        local cache = device:get_field(STATUS_CACHE)
-        local mop_pref = device.preferences.mopMode
-        viomi.clean_rooms(device, ip, token, cache, mop_pref, nil)
-
-        device:emit_event(capabilities.switch.switch.on())
-        device:emit_event(capabilities.robotCleanerCleaningMode.robotCleanerCleaningMode.auto())
-        device:emit_event(capabilities.robotCleanerMovement.robotCleanerMovement.idle())
-
-        local comp = device.profile.components.selectAll
-        if comp then device:emit_component_event(comp, capabilities.momentary.push()) end
-
-        device.thread:call_with_delay(2, function() pcall(poll_device_status, device) end)
-
-    elseif comp_id == "deselectAll" then
-        log.info(string.format("[%s] Akcja: Odznacz wszystko", device.label))
-        reset_room_switches(device)
-
-        local comp = device.profile.components.deselectAll
-        if comp then device:emit_component_event(comp, capabilities.momentary.push()) end
-
-    elseif comp_id == "syncRooms" then
-        log.info(string.format("[%s] Akcja: Wczytaj pokoje z odkurzacza", device.label))
-        local detected = viomi.get_rooms(device, ip, token)
-        if detected and #detected > 0 then
-            log.info(string.format("[%s] Pomyślnie wczytano %d pokojów z odkurzacza:", device.label, #detected))
-            local room_id_map = {}
-            for i, r in ipairs(detected) do
-                log.info(string.format("  -> Pokój %d: '%s' (ID: %d)", i, r.name, r.id))
-                if i <= #ROOM_COMPONENTS then
-                    room_id_map[ROOM_COMPONENTS[i].key] = r.id
-                end
-            end
-            device:set_field("detected_room_ids", room_id_map)
-        else
-            log.info(string.format("[%s] W pamięci odkurzacza nie znaleziono jeszcze przypisanych pokojów (stwórz nieaktywny harmonogram z pokojami w Xiaomi Home).", device.label))
-        end
-
-        local comp = device.profile.components.syncRooms
-        if comp then device:emit_component_event(comp, capabilities.momentary.push()) end
-
-    elseif comp_id == "dock" then
-        log.info("Sending Viomi vacuum to dock")
-        viomi.return_to_dock(device, ip, token)
-        local comp = device.profile.components.dock
-        if comp then
-            device:emit_component_event(comp, capabilities.momentary.push())
-        end
-        device:emit_event(capabilities.switch.switch.off())
-        device:emit_event(capabilities.robotCleanerMovement.robotCleanerMovement.homing())
-        device:emit_event(capabilities.robotCleanerCleaningMode.robotCleanerCleaningMode.stop())
-        device.thread:call_with_delay(2, function()
-            pcall(poll_device_status, device)
-        end)
-
-    elseif comp_id == "locate" then
-        log.info("Triggering locator chime on Viomi vacuum")
-        viomi.locate(device, ip, token)
-        local comp = device.profile.components.locate
-        if comp then
-            device:emit_component_event(comp, capabilities.momentary.push())
-        end
-    end
-end
-
 local function refresh_handler(_, device, _)
+    pcall(function()
+        log.info(string.format('[%s] Wywołanie try_update_metadata dla profilu viomi-vacuum-v8', device.label))
+        local success, err = device:try_update_metadata({ profile = 'viomi-vacuum-v8' })
+        log.info(string.format('[%s] try_update_metadata wynik: %s, err: %s', device.label, tostring(success), tostring(err)))
+    end)
     pcall(poll_device_status, device)
 end
 
@@ -423,29 +421,51 @@ local function device_added(_, device)
     device:emit_event(capabilities.robotCleanerTurboMode.robotCleanerTurboMode.off())
     device:emit_event(capabilities.robotCleanerMovement.robotCleanerMovement.idle())
     device:emit_event(capabilities.robotCleanerCleaningMode.robotCleanerCleaningMode.stop())
-    reset_room_switches(device)
+    device:emit_event(capabilities.robotCleanerOperatingState.operatingState.docked())
+
+    device:set_field("selected_room_keys", {})
+    update_room_selector(device, "none")
 end
 
 local function device_init(_, device)
     device:online()
 
-    -- Inicjalizacja przełączników pokojów
-    for _, rc in ipairs(ROOM_COMPONENTS) do
-        local comp = device.profile.components[rc.key]
-        if comp then
-            local is_on = device:get_field("room_state_" .. rc.key) or false
-            if is_on then
-                device:emit_component_event(comp, capabilities.switch.switch.on())
-            else
-                device:emit_component_event(comp, capabilities.switch.switch.off())
-            end
-        end
-    end
+    pcall(function()
+        device:try_update_metadata({ profile = "viomi-vacuum-v8" })
+    end)
+
+    -- Rejestracja obsługiwanych stanów i komend dla robotCleanerOperatingState
+    device:emit_event(capabilities.robotCleanerOperatingState.supportedOperatingStateCommands({
+        "start", "pause", "goHome"
+    }))
+    device:emit_event(capabilities.robotCleanerOperatingState.supportedOperatingStates({
+        "stopped", "running", "paused", "seekingCharger", "charging", "docked"
+    }))
+
+    -- Inicjalizacja stanu wyboru pokoi
+    local selected = device:get_field("selected_room_keys") or {}
+    device:set_field("selected_room_keys", selected)
+    update_room_selector(device, "none")
 
     local ip, token = get_device_config(device)
     if ip and token then
         start_polling_timer(device)
         pcall(poll_device_status, device)
+
+        -- Próba automatycznego pobrania mapy pokoi z harmonogramów
+        device.thread:call_with_delay(3, function()
+            local detected = viomi.get_rooms(device, ip, token)
+            if detected and #detected > 0 then
+                log.info(string.format("[%s] Pomyślnie zsynchronizowano %d pokojów z odkurzacza", device.label, #detected))
+                local room_id_map = {}
+                for i, r in ipairs(detected) do
+                    if i <= #ROOM_DEF then
+                        room_id_map[ROOM_DEF[i].key] = r.id
+                    end
+                end
+                device:set_field("detected_room_ids", room_id_map)
+            end
+        end)
     else
         log.info(string.format("[%s] Device initialized. Waiting for IP and Token preferences.", device.label))
     end
@@ -466,6 +486,9 @@ local function device_info_changed(driver, device, _, args)
     if old.createDev == false and new.createDev == true then
         discovery.create_device(driver)
     end
+
+    -- Aktualizacja nazw pokoi w interfejsie jeśli zmieniono preferencje
+    update_room_selector(device, nil)
 
     if old.ipAddress ~= new.ipAddress or old.token ~= new.token or old.pollingInterval ~= new.pollingInterval then
         stop_polling_timer(device)
@@ -506,8 +529,19 @@ local driver = Driver("viomi-vacuum-v8", {
         [capabilities.fanSpeed.ID] = {
             [capabilities.fanSpeed.commands.setFanSpeed.NAME] = fan_speed_handler
         },
-        [capabilities.momentary.ID] = {
-            [capabilities.momentary.commands.push.NAME] = momentary_handler
+        [capabilities.robotCleanerOperatingState.ID] = {
+            [capabilities.robotCleanerOperatingState.commands.start.NAME] = op_state_start_handler,
+            [capabilities.robotCleanerOperatingState.commands.pause.NAME] = op_state_pause_handler,
+            [capabilities.robotCleanerOperatingState.commands.goHome.NAME] = op_state_gohome_handler
+        },
+        ["fluteriver09555.vacuumDock"] = {
+            ["dock"] = custom_dock_handler
+        },
+        ["fluteriver09555.vacuumRoomSelector"] = {
+            ["selectRoom"] = select_room_handler
+        },
+        ["fluteriver09555.vacuumLocate"] = {
+            ["locate"] = custom_locate_handler
         }
     }
 })
