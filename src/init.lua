@@ -10,20 +10,15 @@ local STATUS_CACHE = "viomi_status_cache"
 local FAIL_COUNT = "viomi_fail_count"
 local DEFAULT_POLLING_INTERVAL = 30
 
--- Custom capabilities
-local VACUUM_DOCK_CAP = capabilities["fluteriver09555.vacuumDock"]
-local ROOM_SELECTOR_CAP = capabilities["fluteriver09555.vacuumRoomSelector"]
-local VACUUM_LOCATE_CAP = capabilities["fluteriver09555.vacuumLocate"]
-
 local ROOM_DEF = {
-    { key = "kitchen",  pref = "room1Name", default_name = "Kuchnia",     default_id = 10 },
-    { key = "living",   pref = "room2Name", default_name = "Salon",       default_id = 11 },
-    { key = "hallway",  pref = "room3Name", default_name = "Korytarz",    default_id = 12 },
-    { key = "bedroom",  pref = "room4Name", default_name = "Sypialnia",   default_id = 13 },
-    { key = "kate",     pref = "room5Name", default_name = "Pokój Kasi",  default_id = 14 },
-    { key = "maciek",   pref = "room6Name", default_name = "Pokój Maćka", default_id = 15 },
-    { key = "bathroom", pref = "room7Name", default_name = "Łazienka",    default_id = 16 },
-    { key = "room8",    pref = "room8Name", default_name = "Pokój 8",     default_id = 17 }
+    { id = "room1", key = "kitchen",  pref = "room1Name", default_name = "Kuchnia",     default_id = 10 },
+    { id = "room2", key = "living",   pref = "room2Name", default_name = "Salon",       default_id = 11 },
+    { id = "room3", key = "hallway",  pref = "room3Name", default_name = "Korytarz",    default_id = 12 },
+    { id = "room4", key = "bedroom",  pref = "room4Name", default_name = "Sypialnia",   default_id = 13 },
+    { id = "room5", key = "kate",     pref = "room5Name", default_name = "Pokój Kasi",  default_id = 14 },
+    { id = "room6", key = "maciek",   pref = "room6Name", default_name = "Pokój Maćka", default_id = 15 },
+    { id = "room7", key = "bathroom", pref = "room7Name", default_name = "Łazienka",    default_id = 16 },
+    { id = "room8", key = "room8",    pref = "room8Name", default_name = "Pokój 8",     default_id = 17 }
 }
 
 local function get_device_config(device)
@@ -37,33 +32,26 @@ local function get_device_config(device)
     return nil, nil
 end
 
-local function update_room_selector(device, last_action)
-    local selected = device:get_field("selected_room_keys") or {}
-    local names = {}
-    local count = 0
-
+local function reset_room_switches(device)
     for _, r in ipairs(ROOM_DEF) do
-        if selected[r.key] then
-            count = count + 1
-            local custom_name = device.preferences[r.pref]
-            local name = (custom_name and custom_name ~= "") and custom_name or r.default_name
-            table.insert(names, name)
+        device:set_field("room_state_" .. r.id, false)
+        local comp = device.profile.components[r.id]
+        if comp then
+            device:emit_component_event(comp, capabilities.switch.switch.off())
         end
     end
+end
 
-    local summary
-    if count == 0 then
-        summary = "Brak (całe mieszkanie)"
-    elseif count == #ROOM_DEF then
-        summary = "Wszystkie pokoje"
-    else
-        summary = table.concat(names, ", ")
-    end
-
-    if ROOM_SELECTOR_CAP then
-        device:emit_event(ROOM_SELECTOR_CAP.selectedRooms({ value = summary }))
-        if last_action then
-            device:emit_event(ROOM_SELECTOR_CAP.lastSelectedRoom({ value = last_action }))
+local function set_all_room_switches(device, is_on)
+    for _, r in ipairs(ROOM_DEF) do
+        device:set_field("room_state_" .. r.id, is_on)
+        local comp = device.profile.components[r.id]
+        if comp then
+            if is_on then
+                device:emit_component_event(comp, capabilities.switch.switch.on())
+            else
+                device:emit_component_event(comp, capabilities.switch.switch.off())
+            end
         end
     end
 end
@@ -108,12 +96,11 @@ local function emit_vacuum_status(device, status)
         device:emit_event(capabilities.robotCleanerCleaningMode.robotCleanerCleaningMode.stop())
     end
 
-    -- Resetowanie zaznaczenia pokojów po zakończeniu sprzątania i powrocie do bazy
+    -- Resetowanie przełączników pokojów po zakończeniu sprzątania i powrocie do bazy
     if prev_state and (prev_state == viomi.RUN_STATE.CLEANING or prev_state == viomi.RUN_STATE.VACUUM_MOP or prev_state == viomi.RUN_STATE.MOP_ONLY or prev_state == viomi.RUN_STATE.RETURNING) then
         if rs == viomi.RUN_STATE.DOCKED or rs == viomi.RUN_STATE.IDLE_0 or rs == viomi.RUN_STATE.IDLE_1 then
-            log.info(string.format("[%s] Sprzątanie zakończone. Resetowanie zaznaczenia pokojów...", device.label))
-            device:set_field("selected_room_keys", {})
-            update_room_selector(device, "none")
+            log.info(string.format("[%s] Sprzątanie zakończone. Resetowanie przełączników pokojów...", device.label))
+            reset_room_switches(device)
         end
     end
 
@@ -180,13 +167,13 @@ local function start_vacuum_cleaning(device)
         return
     end
 
-    local selected = device:get_field("selected_room_keys") or {}
     local ids = {}
     local detected = device:get_field("detected_room_ids") or {}
 
     for _, r in ipairs(ROOM_DEF) do
-        if selected[r.key] then
-            local r_id = detected[r.key] or r.default_id
+        local is_on = device:get_field("room_state_" .. r.id)
+        if is_on then
+            local r_id = detected[r.key] or detected[r.id] or r.default_id
             table.insert(ids, r_id)
         end
     end
@@ -228,8 +215,7 @@ local function dock_vacuum(device)
     device:emit_event(capabilities.robotCleanerOperatingState.operatingState.seekingCharger())
     device:emit_event(capabilities.robotCleanerCleaningMode.robotCleanerCleaningMode.stop())
 
-    device:set_field("selected_room_keys", {})
-    update_room_selector(device, "none")
+    reset_room_switches(device)
 
     device.thread:call_with_delay(2, function()
         pcall(poll_device_status, device)
@@ -271,55 +257,80 @@ local function stop_vacuum(device)
     end)
 end
 
--- Obsługa przełącznika głównego (Switch ON/OFF)
-local function switch_on_handler(_, device, _)
-    start_vacuum_cleaning(device)
-end
+-- Obsługa przełączników (Switch ON/OFF) dla komponentu głównego oraz poszczególnych pokojów
+local function switch_on_handler(_, device, command)
+    local comp_id = command.component or command.component_id or "main"
+    log.info(string.format("[%s] switch_on_handler na komponencie: %s", device.label, comp_id))
 
-local function switch_off_handler(_, device, _)
-    local off_action = device.preferences.switchOffAction or "dock"
-    if off_action == "stop" then
-        stop_vacuum(device)
-    elseif off_action == "pause" then
-        pause_vacuum(device)
-    else -- "dock"
-        dock_vacuum(device)
+    if comp_id == "main" then
+        start_vacuum_cleaning(device)
+    elseif comp_id:match("^room%d+$") then
+        device:set_field("room_state_" .. comp_id, true)
+        local comp = device.profile.components[comp_id]
+        if comp then
+            device:emit_component_event(comp, capabilities.switch.switch.on())
+        end
+    elseif comp_id == "selectAll" then
+        set_all_room_switches(device, true)
+        start_vacuum_cleaning(device)
+        local comp = device.profile.components.selectAll
+        if comp then
+            device:emit_component_event(comp, capabilities.switch.switch.off())
+        end
+    elseif comp_id == "deselectAll" then
+        reset_room_switches(device)
+        local comp = device.profile.components.deselectAll
+        if comp then
+            device:emit_component_event(comp, capabilities.switch.switch.off())
+        end
     end
 end
 
--- Obsługa custom capability: Wybór pokoi (fluteriver09555.vacuumRoomSelector)
-local function select_room_handler(_, device, command)
-    local room = command.args.room
-    log.info(string.format("[%s] Interakcja z wyborem pokoju: %s", device.label, tostring(room)))
+local function switch_off_handler(_, device, command)
+    local comp_id = command.component or command.component_id or "main"
+    log.info(string.format("[%s] switch_off_handler na komponencie: %s", device.label, comp_id))
 
-    local selected = device:get_field("selected_room_keys") or {}
-
-    if room == "clear" then
-        selected = {}
-        device:set_field("selected_room_keys", selected)
-        update_room_selector(device, "clear")
-
-    elseif room == "all" then
-        selected = {}
-        for _, r in ipairs(ROOM_DEF) do
-            selected[r.key] = true
+    if comp_id == "main" then
+        local off_action = device.preferences.switchOffAction or "dock"
+        if off_action == "stop" then
+            stop_vacuum(device)
+        elseif off_action == "pause" then
+            pause_vacuum(device)
+        else -- "dock"
+            dock_vacuum(device)
         end
-        device:set_field("selected_room_keys", selected)
-        update_room_selector(device, "all")
+    elseif comp_id:match("^room%d+$") then
+        device:set_field("room_state_" .. comp_id, false)
+        local comp = device.profile.components[comp_id]
+        if comp then
+            device:emit_component_event(comp, capabilities.switch.switch.off())
+        end
+    elseif comp_id == "selectAll" or comp_id == "deselectAll" then
+        local comp = device.profile.components[comp_id]
+        if comp then
+            device:emit_component_event(comp, capabilities.switch.switch.off())
+        end
+    end
+end
 
-    elseif room == "start" then
-        update_room_selector(device, "start")
+-- Obsługa przycisków chwilowych (Momentary Push) dla selectAll i deselectAll
+local function momentary_handler(_, device, command)
+    local comp_id = command.component or command.component_id
+    log.info(string.format("[%s] momentary_handler na komponencie: %s", device.label, tostring(comp_id)))
+
+    if comp_id == "selectAll" then
+        set_all_room_switches(device, true)
         start_vacuum_cleaning(device)
-
-    else
-        -- Przełączanie stanu pojedynczego pokoju (toggle)
-        if selected[room] then
-            selected[room] = nil
-        else
-            selected[room] = true
+        local comp = device.profile.components.selectAll
+        if comp then
+            device:emit_component_event(comp, capabilities.switch.switch.off())
         end
-        device:set_field("selected_room_keys", selected)
-        update_room_selector(device, room)
+    elseif comp_id == "deselectAll" then
+        reset_room_switches(device)
+        local comp = device.profile.components.deselectAll
+        if comp then
+            device:emit_component_event(comp, capabilities.switch.switch.off())
+        end
     end
 end
 
@@ -423,8 +434,7 @@ local function device_added(_, device)
     device:emit_event(capabilities.robotCleanerCleaningMode.robotCleanerCleaningMode.stop())
     device:emit_event(capabilities.robotCleanerOperatingState.operatingState.docked())
 
-    device:set_field("selected_room_keys", {})
-    update_room_selector(device, "none")
+    reset_room_switches(device)
 end
 
 local function device_init(_, device)
@@ -442,10 +452,28 @@ local function device_init(_, device)
         "stopped", "running", "paused", "seekingCharger", "charging", "docked"
     }))
 
-    -- Inicjalizacja stanu wyboru pokoi
-    local selected = device:get_field("selected_room_keys") or {}
-    device:set_field("selected_room_keys", selected)
-    update_room_selector(device, "none")
+    -- Inicjalizacja stanu przełączników pokojów i przycisków pomocniczych
+    for _, r in ipairs(ROOM_DEF) do
+        local comp = device.profile.components[r.id]
+        if comp then
+            local is_on = device:get_field("room_state_" .. r.id) or false
+            if is_on then
+                device:emit_component_event(comp, capabilities.switch.switch.on())
+            else
+                device:emit_component_event(comp, capabilities.switch.switch.off())
+            end
+        end
+    end
+
+    local select_all_comp = device.profile.components.selectAll
+    if select_all_comp then
+        device:emit_component_event(select_all_comp, capabilities.switch.switch.off())
+    end
+
+    local deselect_all_comp = device.profile.components.deselectAll
+    if deselect_all_comp then
+        device:emit_component_event(deselect_all_comp, capabilities.switch.switch.off())
+    end
 
     local ip, token = get_device_config(device)
     if ip and token then
@@ -461,6 +489,7 @@ local function device_init(_, device)
                 for i, r in ipairs(detected) do
                     if i <= #ROOM_DEF then
                         room_id_map[ROOM_DEF[i].key] = r.id
+                        room_id_map[ROOM_DEF[i].id] = r.id
                     end
                 end
                 device:set_field("detected_room_ids", room_id_map)
@@ -487,9 +516,6 @@ local function device_info_changed(driver, device, _, args)
         discovery.create_device(driver)
     end
 
-    -- Aktualizacja nazw pokoi w interfejsie jeśli zmieniono preferencje
-    update_room_selector(device, nil)
-
     if old.ipAddress ~= new.ipAddress or old.token ~= new.token or old.pollingInterval ~= new.pollingInterval then
         stop_polling_timer(device)
 
@@ -514,6 +540,9 @@ local driver = Driver("viomi-vacuum-v8", {
             [capabilities.switch.commands.on.NAME] = switch_on_handler,
             [capabilities.switch.commands.off.NAME] = switch_off_handler
         },
+        [capabilities.momentary.ID] = {
+            [capabilities.momentary.commands.push.NAME] = momentary_handler
+        },
         [capabilities.refresh.ID] = {
             [capabilities.refresh.commands.refresh.NAME] = refresh_handler
         },
@@ -536,9 +565,6 @@ local driver = Driver("viomi-vacuum-v8", {
         },
         ["fluteriver09555.vacuumDock"] = {
             ["dock"] = custom_dock_handler
-        },
-        ["fluteriver09555.vacuumRoomSelector"] = {
-            ["selectRoom"] = select_room_handler
         },
         ["fluteriver09555.vacuumLocate"] = {
             ["locate"] = custom_locate_handler

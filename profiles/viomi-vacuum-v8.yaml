@@ -12,8 +12,6 @@ components:
     version: 1
   - id: fluteriver09555.vacuumDock
     version: 1
-  - id: fluteriver09555.vacuumRoomSelector
-    version: 1
   - id: robotCleanerCleaningMode
     version: 1
   - id: robotCleanerTurboMode
@@ -26,6 +24,90 @@ components:
     version: 1
   categories:
   - name: RobotCleaner
+
+- id: selectAll
+  label: "Odkurz wszystko"
+  capabilities:
+  - id: switch
+    version: 1
+  - id: momentary
+    version: 1
+  categories:
+  - name: Switch
+
+- id: deselectAll
+  label: "Odznacz wszystko"
+  capabilities:
+  - id: switch
+    version: 1
+  - id: momentary
+    version: 1
+  categories:
+  - name: Switch
+
+- id: room1
+  label: "Kuchnia"
+  capabilities:
+  - id: switch
+    version: 1
+  categories:
+  - name: Switch
+
+- id: room2
+  label: "Salon"
+  capabilities:
+  - id: switch
+    version: 1
+  categories:
+  - name: Switch
+
+- id: room3
+  label: "Korytarz"
+  capabilities:
+  - id: switch
+    version: 1
+  categories:
+  - name: Switch
+
+- id: room4
+  label: "Sypialnia"
+  capabilities:
+  - id: switch
+    version: 1
+  categories:
+  - name: Switch
+
+- id: room5
+  label: "Pokój Kasi"
+  capabilities:
+  - id: switch
+    version: 1
+  categories:
+  - name: Switch
+
+- id: room6
+  label: "Pokój Maćka"
+  capabilities:
+  - id: switch
+    version: 1
+  categories:
+  - name: Switch
+
+- id: room7
+  label: "Łazienka"
+  capabilities:
+  - id: switch
+    version: 1
+  categories:
+  - name: Switch
+
+- id: room8
+  label: "Pokój 8"
+  capabilities:
+  - id: switch
+    version: 1
+  categories:
+  - name: Switch
 
 deviceConfig:
   dashboard:
@@ -66,9 +148,6 @@ deviceConfig:
       capability: fluteriver09555.vacuumDock
       version: 1
     - component: main
-      capability: fluteriver09555.vacuumRoomSelector
-      version: 1
-    - component: main
       capability: robotCleanerCleaningMode
       version: 1
     - component: main
@@ -79,6 +158,36 @@ deviceConfig:
       version: 1
     - component: main
       capability: fluteriver09555.vacuumLocate
+      version: 1
+    - component: selectAll
+      capability: switch
+      version: 1
+    - component: deselectAll
+      capability: switch
+      version: 1
+    - component: room1
+      capability: switch
+      version: 1
+    - component: room2
+      capability: switch
+      version: 1
+    - component: room3
+      capability: switch
+      version: 1
+    - component: room4
+      capability: switch
+      version: 1
+    - component: room5
+      capability: switch
+      version: 1
+    - component: room6
+      capability: switch
+      version: 1
+    - component: room7
+      capability: switch
+      version: 1
+    - component: room8
+      capability: switch
       version: 1
     - component: main
       capability: refresh
@@ -98,9 +207,6 @@ deviceConfig:
         capability: robotCleanerOperatingState
         version: 1
       - component: main
-        capability: fluteriver09555.vacuumRoomSelector
-        version: 1
-      - component: main
         capability: robotCleanerCleaningMode
         version: 1
       - component: main
@@ -108,6 +214,36 @@ deviceConfig:
         version: 1
       - component: main
         capability: fanSpeed
+        version: 1
+      - component: selectAll
+        capability: switch
+        version: 1
+      - component: deselectAll
+        capability: switch
+        version: 1
+      - component: room1
+        capability: switch
+        version: 1
+      - component: room2
+        capability: switch
+        version: 1
+      - component: room3
+        capability: switch
+        version: 1
+      - component: room4
+        capability: switch
+        version: 1
+      - component: room5
+        capability: switch
+        version: 1
+      - component: room6
+        capability: switch
+        version: 1
+      - component: room7
+        capability: switch
+        version: 1
+      - component: room8
+        capability: switch
         version: 1
     actions:
       - component: main
@@ -120,9 +256,6 @@ deviceConfig:
         capability: fluteriver09555.vacuumDock
         version: 1
       - component: main
-        capability: fluteriver09555.vacuumRoomSelector
-        version: 1
-      - component: main
         capability: robotCleanerCleaningMode
         version: 1
       - component: main
@@ -133,6 +266,42 @@ deviceConfig:
         version: 1
       - component: main
         capability: fluteriver09555.vacuumLocate
+        version: 1
+      - component: selectAll
+        capability: momentary
+        version: 1
+      - component: selectAll
+        capability: switch
+        version: 1
+      - component: deselectAll
+        capability: momentary
+        version: 1
+      - component: deselectAll
+        capability: switch
+        version: 1
+      - component: room1
+        capability: switch
+        version: 1
+      - component: room2
+        capability: switch
+        version: 1
+      - component: room3
+        capability: switch
+        version: 1
+      - component: room4
+        capability: switch
+        version: 1
+      - component: room5
+        capability: switch
+        version: 1
+      - component: room6
+        capability: switch
+        version: 1
+      - component: room7
+        capability: switch
+        version: 1
+      - component: room8
+        capability: switch
         version: 1
 
 preferences:

@@ -34,17 +34,14 @@ Możesz zainstalować sterownik bezpośrednio na swoim hubie SmartThings jednym 
 - **Powrót do bazy (Zawsze pod ręką):**
   - Dedykowany przycisk **Powrót do bazy** umieszczony bezpośrednio w głównym kafelku sterowania.
   - Standardowe przyciski systemowe SmartThings (`robotCleanerOperatingState`): **Start**, **Wstrzymaj**, **Wróć** (powrót do stacji).
-- **Wybór pokojów (Room Cleaning) w stylu sekcji Sprzątanie:**
-  - Nowoczesna, kompaktowa **siatka przycisków w układzie 2-kolumnowym** (dokładnie jak w sekcji *Sprzątanie*), bez zbędnych, rozciągniętych kafelków:
-    - `[ Kuchnia ]` `[ Salon ]`
-    - `[ Korytarz ]` `[ Sypialnia ]`
-    - `[ Pokój Kasi ]` `[ Pokój Maćka ]`
-    - `[ Łazienka ]` `[ Pokój 8 ]`
-    - `[ Wszystkie pokoje ]` `[ Odznacz wszystko ]`
-    - `[ ▶ Start odkurzania ]`
-  - **Wybór wielokrotny:** Możliwość zaznaczenia dowolnej liczby pokoi naraz (np. Kuchnia + Salon) przed uruchomieniem sprzątania.
-  - **Podgląd na żywo:** Dynamiczny wskaźnik tekstowy *Wybrane do odkurzenia* (np. `Kuchnia, Salon` lub `Brak (całe mieszkanie)`).
-  - Po powrocie do bazy i zakończeniu odkurzania zaznaczone pokoje automatycznie resetują się do stanu początkowego.
+- **Wybór pokojów (Room Cleaning) z jednoczesnym zaznaczaniem wielu pokoi:**
+  - Niezależne przełączniki dla każdego pokoju (`Kuchnia`, `Salon`, `Korytarz`, `Sypialnia`, `Pokój Kasi`, `Pokój Maćka`, `Łazienka`, `Pokój 8`):
+    - **Równoczesny wybór wielu pokoi:** Możesz włączyć przełącznik dla kilku pokoi naraz (np. Kuchnia i Salon) – zaznaczenia pozostają aktywne!
+    - Następnie wystarczy wcisnąć **Start** w sekcji stanu pracy lub włączyć główny przełącznik robota – odkurzacz posprząta wyłącznie wskazane pomieszczenia.
+  - **Szybkie akcje grupowe:**
+    - `[ Odkurz wszystko ]` – zaznacza wszystkie pokoje i uruchamia całościowe sprzątanie mieszkania.
+    - `[ Odznacz wszystko ]` – wyłącza zaznaczenie wszystkich aktywnych przełączników pokojów jednym kliknięciem.
+  - **Automatyczny reset:** Po zakończeniu sprzątania i powrocie do stacji dokującej (`DOCKED` / `CHARGING`) przełączniki pokojów automatycznie powracają do stanu wyłączonego.
   - Możliwość edycji nazw pokojów w ustawieniach urządzenia (*Ustawienia -> Nazwa: Pokój 1..8*).
 - **Zlokalizuj odkurzacz (`fluteriver09555.vacuumLocate`):**
   - Dedykowany przycisk wywołania sygnału dźwiękowego w robocie, by łatwo go odnaleźć.
