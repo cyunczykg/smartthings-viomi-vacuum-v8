@@ -81,7 +81,6 @@ function viomi.parse_status(raw)
             status[prop_name] = raw[idx]
         end
     else
-        -- Fallback if table already has named keys or partial array
         for idx, prop_name in ipairs(viomi.ALL_PROPS) do
             status[prop_name] = raw[prop_name] or raw[idx]
         end
@@ -114,8 +113,49 @@ function viomi.get_status(device, ip, token)
     return nil
 end
 
--- Start or resume cleaning
-function viomi.start_cleaning(device, ip, token, status_cache, mop_pref)
+-- Parse room names and IDs from get_ordertime schedules
+function viomi.parse_rooms_from_ordertime(schedules)
+    if not schedules or type(schedules) ~= "table" then return {} end
+    local rooms = {}
+    local seen_ids = {}
+
+    for _, raw_sched in ipairs(schedules) do
+        if type(raw_sched) == "string" then
+            local parts = {}
+            for part in string.gmatch(raw_sched, "[^_]+") do
+                table.insert(parts, part)
+            end
+            -- Format: id, enabled, repeat, hour, min, ?, ?, ?, ?, ?, ?, nbRooms, id1, name1, id2, name2...
+            local nb_rooms = tonumber(parts[12]) or 0
+            if nb_rooms > 0 then
+                local idx = 13
+                for i = 1, nb_rooms do
+                    local r_id = tonumber(parts[idx])
+                    local r_name = parts[idx + 1]
+                    if r_id and r_name and not seen_ids[r_id] then
+                        seen_ids[r_id] = true
+                        table.insert(rooms, { id = r_id, name = r_name })
+                    end
+                    idx = idx + 2
+                end
+            end
+        end
+    end
+
+    return rooms
+end
+
+-- Query room list from vacuum schedules
+function viomi.get_rooms(device, ip, token)
+    local result = miio.cmd(device, ip, token, "get_ordertime", {})
+    if result and type(result) == "table" then
+        return viomi.parse_rooms_from_ordertime(result)
+    end
+    return {}
+end
+
+-- Start cleaning: either selected rooms or whole home
+function viomi.clean_rooms(device, ip, token, status_cache, mop_pref, room_ids)
     local mode = (status_cache and status_cache.mode) or 0
     local is_mop = (status_cache and status_cache.is_mop) or 0
     local box_type = (status_cache and status_cache.box_type) or 1
@@ -153,11 +193,26 @@ function viomi.start_cleaning(device, ip, token, status_cache, mop_pref)
         end
     end
 
-    if mode == 3 then
-        return miio.cmd(device, ip, token, "set_mode", { 3, 1 })
+    if not room_ids or #room_ids == 0 then
+        -- Całościowe odkurzanie (bez wskazywania konkretnych pokojów)
+        if mode == 3 then
+            return miio.cmd(device, ip, token, "set_mode", { 3, 1 })
+        else
+            return miio.cmd(device, ip, token, "set_mode_withroom", { action_mode, 1, 0 })
+        end
     else
-        return miio.cmd(device, ip, token, "set_mode_withroom", { action_mode, 1, 0 })
+        -- Sprzątanie wskazanych pokojów: [action_mode, 1, #room_ids, id1, id2, ...]
+        local params = { action_mode, 1, #room_ids }
+        for _, id in ipairs(room_ids) do
+            table.insert(params, id)
+        end
+        return miio.cmd(device, ip, token, "set_mode_withroom", params)
     end
+end
+
+-- Start or resume whole cleaning
+function viomi.start_cleaning(device, ip, token, status_cache, mop_pref)
+    return viomi.clean_rooms(device, ip, token, status_cache, mop_pref, nil)
 end
 
 -- Pause cleaning

@@ -18,20 +18,111 @@ components:
     version: 1
   categories:
   - name: RobotCleaner
+
+- id: selectAll
+  label: "Odkurz wszystko"
+  capabilities:
+  - id: momentary
+    version: 1
+  categories:
+  - name: RobotCleaner
+
+- id: deselectAll
+  label: "Odznacz wszystko"
+  capabilities:
+  - id: momentary
+    version: 1
+  categories:
+  - name: RobotCleaner
+
+- id: syncRooms
+  label: "Wczytaj pokoje z odkurzacza"
+  capabilities:
+  - id: momentary
+    version: 1
+  categories:
+  - name: RobotCleaner
+
 - id: dock
   label: "Powrót do bazy"
   capabilities:
   - id: momentary
     version: 1
   categories:
-  - name: Switch
+  - name: RobotCleaner
+
 - id: locate
   label: "Zlokalizuj odkurzacz"
   capabilities:
   - id: momentary
     version: 1
   categories:
-  - name: Switch
+  - name: RobotCleaner
+
+- id: room1
+  label: "Kuchnia"
+  capabilities:
+  - id: switch
+    version: 1
+  categories:
+  - name: RobotCleaner
+
+- id: room2
+  label: "Salon"
+  capabilities:
+  - id: switch
+    version: 1
+  categories:
+  - name: RobotCleaner
+
+- id: room3
+  label: "Korytarz"
+  capabilities:
+  - id: switch
+    version: 1
+  categories:
+  - name: RobotCleaner
+
+- id: room4
+  label: "Sypialnia"
+  capabilities:
+  - id: switch
+    version: 1
+  categories:
+  - name: RobotCleaner
+
+- id: room5
+  label: "Pokój Kasi"
+  capabilities:
+  - id: switch
+    version: 1
+  categories:
+  - name: RobotCleaner
+
+- id: room6
+  label: "Pokój Maćka"
+  capabilities:
+  - id: switch
+    version: 1
+  categories:
+  - name: RobotCleaner
+
+- id: room7
+  label: "Łazienka"
+  capabilities:
+  - id: switch
+    version: 1
+  categories:
+  - name: RobotCleaner
+
+- id: room8
+  label: "Pokój 8"
+  capabilities:
+  - id: switch
+    version: 1
+  categories:
+  - name: RobotCleaner
+
 deviceConfig:
   dashboard:
     states:
@@ -73,11 +164,44 @@ deviceConfig:
     - component: main
       capability: fanSpeed
       version: 1
+    - component: selectAll
+      capability: momentary
+      version: 1
+    - component: deselectAll
+      capability: momentary
+      version: 1
+    - component: syncRooms
+      capability: momentary
+      version: 1
     - component: dock
       capability: momentary
       version: 1
     - component: locate
       capability: momentary
+      version: 1
+    - component: room1
+      capability: switch
+      version: 1
+    - component: room2
+      capability: switch
+      version: 1
+    - component: room3
+      capability: switch
+      version: 1
+    - component: room4
+      capability: switch
+      version: 1
+    - component: room5
+      capability: switch
+      version: 1
+    - component: room6
+      capability: switch
+      version: 1
+    - component: room7
+      capability: switch
+      version: 1
+    - component: room8
+      capability: switch
       version: 1
     - component: main
       capability: refresh
@@ -102,6 +226,30 @@ deviceConfig:
       - component: main
         capability: fanSpeed
         version: 1
+      - component: room1
+        capability: switch
+        version: 1
+      - component: room2
+        capability: switch
+        version: 1
+      - component: room3
+        capability: switch
+        version: 1
+      - component: room4
+        capability: switch
+        version: 1
+      - component: room5
+        capability: switch
+        version: 1
+      - component: room6
+        capability: switch
+        version: 1
+      - component: room7
+        capability: switch
+        version: 1
+      - component: room8
+        capability: switch
+        version: 1
     actions:
       - component: main
         capability: switch
@@ -118,17 +266,50 @@ deviceConfig:
       - component: main
         capability: fanSpeed
         version: 1
+      - component: selectAll
+        capability: momentary
+        version: 1
+      - component: deselectAll
+        capability: momentary
+        version: 1
+      - component: syncRooms
+        capability: momentary
+        version: 1
       - component: dock
         capability: momentary
         version: 1
       - component: locate
         capability: momentary
         version: 1
+      - component: room1
+        capability: switch
+        version: 1
+      - component: room2
+        capability: switch
+        version: 1
+      - component: room3
+        capability: switch
+        version: 1
+      - component: room4
+        capability: switch
+        version: 1
+      - component: room5
+        capability: switch
+        version: 1
+      - component: room6
+        capability: switch
+        version: 1
+      - component: room7
+        capability: switch
+        version: 1
+      - component: room8
+        capability: switch
+        version: 1
 
 preferences:
 - name: ipAddress
   title: "Adres IP"
-  description: "Adres IP odkurzacza w Twojej sieci lokalnej (np. 192.168.1.50)"
+  description: "Adres IP odkurzacza w Twojej sieci lokalnej (np. 192.168.10.122)"
   required: true
   preferenceType: string
   definition:
@@ -136,7 +317,7 @@ preferences:
     default: ""
 - name: token
   title: "Token urządzenia"
-  description: "32-znakowy token szesnastkowy (hex) z Mi Home lub miiocli"
+  description: "32-znakowy token szesnastkowy (hex) z Xiaomi Cloud Extractor"
   required: true
   preferenceType: string
   definition:
@@ -174,6 +355,70 @@ preferences:
       vacuum_and_mop: "Odkurzanie i mopowanie"
       mop: "Tylko mopowanie"
     default: "auto"
+- name: room1Name
+  title: "Nazwa: Pokój 1"
+  description: "Nazwa pierwszego pokoju"
+  required: false
+  preferenceType: string
+  definition:
+    stringType: text
+    default: "Kuchnia"
+- name: room2Name
+  title: "Nazwa: Pokój 2"
+  description: "Nazwa drugiego pokoju"
+  required: false
+  preferenceType: string
+  definition:
+    stringType: text
+    default: "Salon"
+- name: room3Name
+  title: "Nazwa: Pokój 3"
+  description: "Nazwa trzeciego pokoju"
+  required: false
+  preferenceType: string
+  definition:
+    stringType: text
+    default: "Korytarz"
+- name: room4Name
+  title: "Nazwa: Pokój 4"
+  description: "Nazwa czwartego pokoju"
+  required: false
+  preferenceType: string
+  definition:
+    stringType: text
+    default: "Sypialnia"
+- name: room5Name
+  title: "Nazwa: Pokój 5"
+  description: "Nazwa piątego pokoju"
+  required: false
+  preferenceType: string
+  definition:
+    stringType: text
+    default: "Pokój Kasi"
+- name: room6Name
+  title: "Nazwa: Pokój 6"
+  description: "Nazwa szóstego pokoju"
+  required: false
+  preferenceType: string
+  definition:
+    stringType: text
+    default: "Pokój Maćka"
+- name: room7Name
+  title: "Nazwa: Pokój 7"
+  description: "Nazwa siódmego pokoju"
+  required: false
+  preferenceType: string
+  definition:
+    stringType: text
+    default: "Łazienka"
+- name: room8Name
+  title: "Nazwa: Pokój 8"
+  description: "Nazwa ósmego pokoju"
+  required: false
+  preferenceType: string
+  definition:
+    stringType: text
+    default: "Pokój 8"
 - name: createDev
   title: "Utwórz kolejne urządzenie"
   description: "Przełącz, aby utworzyć dodatkowy profil urządzenia na hubie"
