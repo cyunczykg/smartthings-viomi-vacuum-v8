@@ -168,6 +168,62 @@ preferences:
       vacuum_and_mop: "Odkurzanie i mopowanie"
       mop: "Tylko mopowanie"
     default: "auto"
+- name: room1Name
+  title: "Nazwa: Pokój 1 (ID 10)"
+  description: "Nazwa pierwszego pokoju"
+  required: false
+  preferenceType: string
+  definition:
+    stringType: text
+    default: "Kuchnia"
+- name: room2Name
+  title: "Nazwa: Pokój 2 (ID 11)"
+  description: "Nazwa drugiego pokoju"
+  required: false
+  preferenceType: string
+  definition:
+    stringType: text
+    default: "Salon"
+- name: room3Name
+  title: "Nazwa: Pokój 3 (ID 12)"
+  description: "Nazwa trzeciego pokoju"
+  required: false
+  preferenceType: string
+  definition:
+    stringType: text
+    default: "Korytarz"
+- name: room4Name
+  title: "Nazwa: Pokój 4 (ID 13)"
+  description: "Nazwa czwartego pokoju"
+  required: false
+  preferenceType: string
+  definition:
+    stringType: text
+    default: "Łazienka"
+- name: room5Name
+  title: "Nazwa: Pokój 5 (ID 14)"
+  description: "Nazwa piątego pokoju"
+  required: false
+  preferenceType: string
+  definition:
+    stringType: text
+    default: "Sypialnia"
+- name: room6Name
+  title: "Nazwa: Pokój 6 (ID 15)"
+  description: "Nazwa szóstego pokoju"
+  required: false
+  preferenceType: string
+  definition:
+    stringType: text
+    default: "Jadalnia"
+- name: room7Name
+  title: "Nazwa: Pokój 7 (ID 16)"
+  description: "Nazwa siódmego pokoju"
+  required: false
+  preferenceType: string
+  definition:
+    stringType: text
+    default: "Pokój 1"
 - name: createDev
   title: "Utwórz kolejne urządzenie"
   description: "Przełącz, aby utworzyć dodatkowy profil urządzenia na hubie"

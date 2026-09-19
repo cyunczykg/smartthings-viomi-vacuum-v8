@@ -10,15 +10,20 @@ local STATUS_CACHE = "viomi_status_cache"
 local FAIL_COUNT = "viomi_fail_count"
 local DEFAULT_POLLING_INTERVAL = 30
 
-local KNOWN_ROOM_MAPPING = {
-    { key = "kitchen",  name = "Kuchnia" },
-    { key = "living",   name = "Salon" },
-    { key = "dining",   name = "Jadalnia" },
-    { key = "room1",    name = "Pokój 1" },
-    { key = "hallway",  name = "Korytarz" },
-    { key = "bedroom",  name = "Sypialnia" },
-    { key = "bathroom", name = "Łazienka" }
+local ROOM_DEF = {
+    { key = "kitchen",  pref = "room1Name", default_name = "Kuchnia",   default_id = 10 },
+    { key = "living",   pref = "room2Name", default_name = "Salon",     default_id = 11 },
+    { key = "hallway",  pref = "room3Name", default_name = "Korytarz",  default_id = 12 },
+    { key = "bathroom", pref = "room4Name", default_name = "Łazienka",  default_id = 13 },
+    { key = "bedroom",  pref = "room5Name", default_name = "Sypialnia", default_id = 14 },
+    { key = "dining",   pref = "room6Name", default_name = "Jadalnia",  default_id = 15 },
+    { key = "room1",    pref = "room7Name", default_name = "Pokój 1",   default_id = 16 }
 }
+
+local ROOM_BY_KEY = {}
+for _, r in ipairs(ROOM_DEF) do
+    ROOM_BY_KEY[r.key] = r
+end
 
 local function get_device_config(device)
     local ip = device.preferences.ipAddress
@@ -29,6 +34,17 @@ local function get_device_config(device)
         return ip, token
     end
     return nil, nil
+end
+
+local function get_room_name(device, room_def)
+    if room_def.pref and device.preferences[room_def.pref] ~= nil then
+        local p = device.preferences[room_def.pref]
+        if p == "" or p == "-" or p:lower() == "none" or p:lower() == "brak" then
+            return nil
+        end
+        return p
+    end
+    return room_def.default_name
 end
 
 local function emit_room_selector_event(device, attr_name, value)
@@ -45,8 +61,8 @@ local function emit_room_selector_event(device, attr_name, value)
     end
 end
 
-local function update_selected_rooms_display(device, last_toggled_key, was_added)
-    local sel = device:get_field("selected_rooms") or {}
+local function update_selected_rooms_display(device, sel, last_toggled_key, was_added)
+    sel = sel or device:get_field("selected_rooms") or {}
     if #sel == 0 then
         emit_room_selector_event(device, "lastSelectedRoom", "all")
         emit_room_selector_event(device, "selectedRooms", "Wszystkie pokoje (całe mieszkanie)")
@@ -60,7 +76,8 @@ local function update_selected_rooms_display(device, last_toggled_key, was_added
 
         local names = {}
         for _, k in ipairs(sel) do
-            local name = name_lookup[k] or k
+            local r_def = ROOM_BY_KEY[k]
+            local name = name_lookup[k] or (r_def and get_room_name(device, r_def)) or k
             table.insert(names, name)
         end
         local display_str = table.concat(names, ", ")
@@ -77,75 +94,78 @@ end
 
 local function sync_rooms_from_vacuum(device)
     local ip, token = get_device_config(device)
-    if not ip or not token then
-        log.warn(string.format("[%s] Brak IP lub Tokena - nie można pobrać pomieszczeń", device.label))
-        emit_room_selector_event(device, "supportedRooms", { "all", "sync" })
-        emit_room_selector_event(device, "lastSelectedRoom", "all")
-        emit_room_selector_event(device, "selectedRooms", "Błąd: Brak skonfigurowanego IP/Tokena")
-        return
+    local detected = {}
+    if ip and token then
+        log.info(string.format("[%s] Pobieranie pomieszczeń z odkurzacza...", device.label))
+        local ok, res = pcall(viomi.get_rooms, device, ip, token)
+        if ok and res then
+            detected = res
+        end
+        log.info(string.format("[%s] viomi.get_rooms zwróciło %d pomieszczeń", device.label, #detected))
     end
-
-    log.info(string.format("[%s] Pobieranie pomieszczeń z odkurzacza...", device.label))
-    local ok, detected = pcall(viomi.get_rooms, device, ip, token)
-    if not ok or not detected then
-        log.warn(string.format("[%s] Błąd podczas viomi.get_rooms: %s", device.label, tostring(detected)))
-        detected = {}
-    end
-
-    log.info(string.format("[%s] viomi.get_rooms zwróciło %d pomieszczeń", device.label, #detected))
 
     local room_id_map = {}
-    local available_keys = {}
+    local available_rooms = {}
 
     if #detected > 0 then
         for _, det in ipairs(detected) do
             local det_name_lower = (det.name or ""):lower()
-            local found_key = nil
-            for _, r in ipairs(KNOWN_ROOM_MAPPING) do
-                if det_name_lower == r.name:lower() or det_name_lower:find(r.name:lower()) then
-                    found_key = r.key
+            local found_def = nil
+            for _, r in ipairs(ROOM_DEF) do
+                if det_name_lower == r.default_name:lower() or det_name_lower:find(r.key) then
+                    found_def = r
                     break
                 end
             end
-            if not found_key then
-                found_key = "room_" .. tostring(det.id)
+            if not found_def then
+                for _, r in ipairs(ROOM_DEF) do
+                    if not room_id_map[r.key] then
+                        found_def = r
+                        break
+                    end
+                end
             end
 
-            room_id_map[found_key] = det.id
-            table.insert(available_keys, { key = found_key, name = det.name or ("Pokój " .. det.id) })
+            local key = found_def and found_def.key or ("room_" .. det.id)
+            local name = det.name or (found_def and get_room_name(device, found_def)) or ("Pokój " .. det.id)
+            room_id_map[key] = det.id
+            table.insert(available_rooms, { key = key, name = name, id = det.id })
         end
-
-        device:set_field("detected_room_ids", room_id_map)
-        device:set_field("available_rooms", available_keys)
-
-        local supported = { "all" }
-        for _, r in ipairs(available_keys) do
-            table.insert(supported, r.key)
-        end
-        table.insert(supported, "sync")
-
-        emit_room_selector_event(device, "supportedRooms", supported)
-        emit_room_selector_event(device, "lastSelectedRoom", "all")
-        emit_room_selector_event(device, "selectedRooms", string.format("Wczytano %d pomieszczeń z odkurzacza", #available_keys))
-        log.info(string.format("[%s] Zaktualizowano supportedRooms (%d pokoi)", device.label, #available_keys))
     else
-        -- Brak zapisanych pokoi w odkurzaczu: NIE dodajemy żadnych sztucznych przykładowych pokoi!
-        log.info(string.format("[%s] Brak zapisanych pokoi w odkurzaczu - pozostawiono tylko 'Wszystko' i 'Wczytaj pomieszczenia'", device.label))
-        device:set_field("detected_room_ids", {})
-        device:set_field("available_rooms", {})
-        device:set_field("selected_rooms", {})
-
-        emit_room_selector_event(device, "supportedRooms", { "all", "sync" })
-        emit_room_selector_event(device, "lastSelectedRoom", "all")
-        emit_room_selector_event(device, "selectedRooms", "Brak zapisanych pomieszczeń w odkurzaczu")
-
-        device.thread:call_with_delay(3, function()
-            local sel = device:get_field("selected_rooms") or {}
-            if #sel == 0 then
-                emit_room_selector_event(device, "selectedRooms", "Wszystkie pokoje (całe mieszkanie)")
+        -- Jeśli odkurzacz nie ma zapisanego harmonogramu z pokojami w chmurze,
+        -- ładujemy zdefiniowane strefy z konfiguracji urządzenia
+        log.info(string.format("[%s] Ładowanie zdefiniowanych pomieszczeń z konfiguracji urządzenia...", device.label))
+        for _, r in ipairs(ROOM_DEF) do
+            local name = get_room_name(device, r)
+            if name and name ~= "" then
+                room_id_map[r.key] = r.default_id
+                table.insert(available_rooms, { key = r.key, name = name, id = r.default_id })
             end
-        end)
+        end
     end
+
+    device:set_field("detected_room_ids", room_id_map)
+    device:set_field("available_rooms", available_rooms)
+
+    -- Tworzymy dynamiczną listę przycisków w sekcji Zakres:
+    -- [ Wszystko ] [ Kuchnia ] [ Salon ] ... [ Wczytaj pomieszczenia ]
+    local supported = { "all" }
+    for _, r in ipairs(available_rooms) do
+        table.insert(supported, r.key)
+    end
+    table.insert(supported, "sync")
+
+    emit_room_selector_event(device, "supportedRooms", supported)
+    emit_room_selector_event(device, "lastSelectedRoom", "all")
+    emit_room_selector_event(device, "selectedRooms", string.format("Wczytano %d pomieszczeń", #available_rooms))
+    log.info(string.format("[%s] Zaktualizowano supportedRooms: %s", device.label, table.concat(supported, ", ")))
+
+    device.thread:call_with_delay(2, function()
+        local sel = device:get_field("selected_rooms") or {}
+        if #sel == 0 then
+            emit_room_selector_event(device, "selectedRooms", "Wszystkie pokoje (całe mieszkanie)")
+        end
+    end)
 end
 
 local function emit_vacuum_status(device, status)
@@ -272,10 +292,11 @@ local function start_vacuum_cleaning(device)
     end
 
     for _, k in ipairs(sel) do
-        local r_id = detected[k]
+        local r_def = ROOM_BY_KEY[k]
+        local r_id = detected[k] or (r_def and r_def.default_id)
         if r_id then
             table.insert(ids, r_id)
-            local name = name_lookup[k] or k
+            local name = name_lookup[k] or (r_def and get_room_name(device, r_def)) or k
             table.insert(names, name)
         end
     end
@@ -392,7 +413,6 @@ local function movement_handler(_, device, command)
     end
 end
 
--- Obsługa sekcji Stan: tylko przycisk z domkiem (goHome) do powrotu do bazy
 local function op_state_gohome_handler(_, device, _)
     log.info(string.format("[%s] Przycisk z domkiem: Powrót do bazy", device.label))
     dock_vacuum(device)
@@ -435,13 +455,12 @@ local function custom_select_room_handler(_, device, command)
 
     if not room or room == "all" then
         device:set_field("selected_rooms", {})
-        update_selected_rooms_display(device)
+        update_selected_rooms_display(device, {})
     elseif room == "sync" then
-        -- Natychmiastowe potwierdzenie komendy, aby aplikacja nie zawieszała się
+        -- Natychmiastowe potwierdzenie komendy w UI
         emit_room_selector_event(device, "lastSelectedRoom", "sync")
-        emit_room_selector_event(device, "selectedRooms", "Wczytywanie pomieszczeń z odkurzacza...")
+        emit_room_selector_event(device, "selectedRooms", "Wczytywanie pomieszczeń...")
 
-        -- Asynchroniczne odpytanie odkurzacza w osobnym wywołaniu
         device.thread:call_with_delay(0.2, function()
             sync_rooms_from_vacuum(device)
         end)
@@ -464,7 +483,7 @@ local function custom_select_room_handler(_, device, command)
         end
 
         device:set_field("selected_rooms", new_sel)
-        update_selected_rooms_display(device, room, not exists)
+        update_selected_rooms_display(device, new_sel, room, not exists)
     end
 end
 
@@ -488,7 +507,7 @@ local function device_added(_, device)
     device:emit_event(capabilities.robotCleanerOperatingState.operatingState.docked())
 
     device:set_field("selected_rooms", {})
-    device:set_field("available_rooms", {})
+    device:set_field("available_rooms", nil)
     device:set_field("detected_room_ids", {})
 
     -- Wstępnie TYLKO 2 przyciski: Wszystko i Wczytaj pomieszczenia
@@ -504,8 +523,7 @@ local function device_init(_, device)
         device:try_update_metadata({ profile = "viomi-vacuum-v8" })
     end)
 
-    -- W sekcji Stan: TYLKO przycisk z domkiem ("goHome" / powrót do bazy).
-    -- Brak zbędnych przycisków start i pause w sekcji Stan!
+    -- W sekcji Stan: TYLKO przycisk z domkiem ("goHome" / powrót do bazy)
     device:emit_event(capabilities.robotCleanerOperatingState.supportedOperatingStateCommands({
         "goHome"
     }))
@@ -513,7 +531,7 @@ local function device_init(_, device)
         "stopped", "running", "paused", "seekingCharger", "charging", "docked"
     }))
 
-    -- Wstępnie TYLKO "Wszystko" i "Wczytaj pomieszczenia" (brak przykładowych pokoi)
+    -- Wstępnie: tylko te pokoje, które zostały już wczytane (lub tylko 2 przyciski jeśli jeszcze nie kliknięto Wczytaj)
     local available_rooms = device:get_field("available_rooms")
     if available_rooms and #available_rooms > 0 then
         local supported = { "all" }
@@ -567,6 +585,18 @@ local function device_info_changed(driver, device, _, args)
             start_polling_timer(device)
             pcall(poll_device_status, device)
         end
+    end
+
+    -- Jeśli użytkownik zmienił nazwy pokoi w preferencjach, zaktualizuj nazwy
+    local avail = device:get_field("available_rooms")
+    if avail and #avail > 0 then
+        for _, r in ipairs(avail) do
+            local r_def = ROOM_BY_KEY[r.key]
+            if r_def then
+                r.name = get_room_name(device, r_def)
+            end
+        end
+        device:set_field("available_rooms", avail)
     end
 
     update_selected_rooms_display(device)
