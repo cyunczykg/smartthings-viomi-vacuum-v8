@@ -26,31 +26,25 @@ Możesz zainstalować sterownik bezpośrednio na swoim hubie SmartThings jednym 
 
 ## 🚀 Możliwości sterownika
 
-- **Włączanie / Wyłączanie / Pauza (`switch`):**
-  - Włączenie głównego przełącznika (`Switch ON`) uruchamia sprzątanie:
-    - Jeśli zaznaczono konkretne pokoje (np. Kuchnia i Salon) -> robot posprząta tylko wybrane pokoje.
-    - Jeśli żaden pokój lub wszystkie są zaznaczone -> robot posprząta całe mieszkanie.
-  - Wyłączenie przełącznika (`Switch OFF`) wykonuje wybraną akcję (domyślnie: powrót do bazy i ładowanie, zatrzymanie w miejscu lub pauza).
-- **Powrót do bazy (Zawsze pod ręką):**
-  - Dedykowany przycisk **Powrót do bazy** umieszczony bezpośrednio w głównym kafelku sterowania.
-  - Standardowe przyciski systemowe SmartThings (`robotCleanerOperatingState`): **Start**, **Wstrzymaj**, **Wróć** (powrót do stacji).
-- **Wybór pokojów (Room Cleaning) z jednoczesnym zaznaczaniem wielu pokoi:**
-  - Niezależne przełączniki dla każdego pokoju (`Kuchnia`, `Salon`, `Korytarz`, `Sypialnia`, `Pokój Kasi`, `Pokój Maćka`, `Łazienka`, `Pokój 8`):
-    - **Równoczesny wybór wielu pokoi:** Możesz włączyć przełącznik dla kilku pokoi naraz (np. Kuchnia i Salon) – zaznaczenia pozostają aktywne!
-    - Następnie wystarczy wcisnąć **Start** w sekcji stanu pracy lub włączyć główny przełącznik robota – odkurzacz posprząta wyłącznie wskazane pomieszczenia.
-  - **Szybkie akcje grupowe:**
-    - `[ Odkurz wszystko ]` – zaznacza wszystkie pokoje i uruchamia całościowe sprzątanie mieszkania.
-    - `[ Odznacz wszystko ]` – wyłącza zaznaczenie wszystkich aktywnych przełączników pokojów jednym kliknięciem.
-  - **Automatyczny reset:** Po zakończeniu sprzątania i powrocie do stacji dokującej (`DOCKED` / `CHARGING`) przełączniki pokojów automatycznie powracają do stanu wyłączonego.
-  - Możliwość edycji nazw pokojów w ustawieniach urządzenia (*Ustawienia -> Nazwa: Pokój 1..8*).
+- **Kompaktowy, nowoczesny interfejs (wszystko w jednym widoku `main`):**
+  - Brak zbędnych pod-komponentów czy kafelków edycji etykiet – czysty, jednolity układ dostosowany do aplikacji SmartThings.
+- **Sterowanie ruchem z okrągłym przyciskiem Play / Pauza (`robotCleanerMovement`):**
+  - W stanie spoczynku wyświetla ikonę **Play (`▶`)**. Po kliknięciu uruchamia sprzątanie (wybranych pokoi lub całego mieszkania).
+  - Podczas aktywnego sprzątania ikona automatycznie zmienia się na **Pauzę (`||`)**. Kliknięcie wstrzymuje odkurzacz w miejscu.
+- **Stan pracy i szybki powrót do bazy (`robotCleanerOperatingState` & `fluteriver09555.vacuumDock`):**
+  - Czytelna informacja o bieżącym statusie (np. `Ładowanie`, `Działa`, `Wstrzymano`, `W poszukiwaniu ładowarki`).
+  - Dedykowany przycisk **Powrót do bazy** (z ikoną domku) natychmiast odsyła robota do stacji dokującej.
+- **Dynamiczny wybór pokojów (Sekcja „Zakres”):**
+  - **Początkowy minimalistyczny widok:** Sterownik wyświetla tylko 2 przyciski: `[ Wszystko ]` oraz `[ Wczytaj pomieszczenia ]`.
+  - **Automatyczny import pomieszczeń:** Po kliknięciu `[ Wczytaj pomieszczenia ]` sterownik synchronizuje listę pokoi z odkurzacza i dynamicznie tworzy przyciski dla poszczególnych pokoi (`[ Salon ]`, `[ Jadalnia ]`, `[ Pokój 1 ]`, `[ Kuchnia ]`, itp.).
+  - **Równoczesny wybór wielu pokoi:** Kliknięcie przycisku pokoju przełącza jego zaznaczenie. Możesz zaznaczyć np. *Kuchnię* i *Salon* – pasek stanu natychmiast wskaże `Wybrane pokoje: Kuchnia, Salon`.
+  - **Sprzątanie sekwencyjne:** Po zaznaczeniu pożądanych pokoi i wciśnięciu Play (`▶`), odkurzacz posprząta po kolei wyłącznie wskazane pomieszczenia.
+  - **Szybkie sprzątanie całości:** Kliknięcie `[ Wszystko ]` (domyślnie wybrane) resetuje wybór i uruchamia sprzątanie całego domu.
+  - **Automatyczny reset:** Po zakończeniu sprzątania i powrocie do bazy wybór automatycznie powraca do opcji `[ Wszystko ]`.
+- **Tryb Turbo (`robotCleanerTurboMode`):** Szybki przycisk włączania maksymalnej siły ssania.
 - **Zlokalizuj odkurzacz (`fluteriver09555.vacuumLocate`):**
   - Dedykowany przycisk wywołania sygnału dźwiękowego w robocie, by łatwo go odnaleźć.
 - **Stan baterii (`battery`):** Odczyt poziomu naładowania w procentach (`0–100%`).
-- **Tryb ruchu i pracy (`robotCleanerMovement` / `robotCleanerCleaningMode`):**
-  - Odzwierciedlenie stanów odkurzacza: `Bezczynny`, `Sprzątanie`, `Wstrzymany`, `Powrót do bazy` (`homing`), `Ładowanie` (`charging`).
-- **Regulacja siły ssania (`fanSpeed`):**
-  - 4 poziomy: `0: Silent` (Cichy), `1: Standard` (Standardowy), `2: Medium` (Średni), `3: Turbo` (Maksymalny).
-- **Tryb maksymalny (`robotCleanerTurboMode`):** Szybki przełącznik trybu Turbo.
 - **Automatyczne rozpoznawanie pojemnika i mopa:**
   - Automatycznie dobiera tryb sprzątania w zależności od założonego pojemnika:
     - Pojemnik na kurz -> Tylko odkurzanie
@@ -124,22 +118,22 @@ Po zapisaniu ustawień hub natychmiast połączy się z robotem w sieci lokalnej
 
 ---
 
-### 🧹 Sprzątanie wybranych pokojów (Room Cleaning)
+### 🧹 Sprzątanie wybranych pokojów (Sekcja „Zakres”)
 
-1. **Wybór pokojów do posprzątania:**
-   - W sekcji **Wybór pokoi** kliknij przyciski stref, które chcesz odkurzyć (np. `[ Kuchnia ]` oraz `[ Salon ]`).
-   - Wskaźnik tekstowy *Wybrane do odkurzenia* natychmiast pokaże listę wybranych pomieszczeń: `Kuchnia, Salon`.
-   - Ponowne kliknięcie pokoju odznacza go z listy.
-   - Kliknięcie `[ Odznacz wszystko ]` resetuje wybór do całego mieszkania.
-   - Kliknięcie `[ Wszystkie pokoje ]` zaznacza cały dom.
-2. **Start odkurzania:**
-   - Kliknij przycisk `[ ▶ Start odkurzania ]` bezpośrednio w sekcji pokoi, LUB
-   - Włącz główny przełącznik odkurzacza (**Włącz / ON**), LUB
-   - Kliknij **Start** w sekcji stanu robota.
-   - Robot natychmiast wyruszy posprzątać tylko wybrane strefy.
-   - Po powrocie do bazy wskaźnik automatycznie resetuje się do stanu początkowego.
-3. **Powrót do bazy:**
-   - Dostępny bezpośrednio w kafelku przycisk **Powrót do bazy** lub systemowy przycisk **Wróć** natychmiast odsyła robota do stacji dokującej.
+1. **Wczytanie pomieszczeń z odkurzacza:**
+   - Domyślnie w sekcji **Zakres** widoczne są 2 przyciski: `[ Wszystko ]` oraz `[ Wczytaj pomieszczenia ]`.
+   - Kliknij `[ Wczytaj pomieszczenia ]` – sterownik pobierze listę pokoi z pamięci odkurzacza i automatycznie utworzy przyciski dla każdego pomieszczenia (`[ Salon ]`, `[ Jadalnia ]`, `[ Pokój 1 ]`, `[ Kuchnia ]`).
+2. **Wybór pokojów do posprzątania:**
+   - Klikaj na przyciski pokoi, które chcesz posprzątać (np. `[ Kuchnia ]` oraz `[ Salon ]`).
+   - Wskaźnik tekstowy natychmiast wyświetli wybraną listę: `Wybrane pokoje: Kuchnia, Salon`.
+   - Ponowne kliknięcie pokoju odznacza go.
+   - Kliknięcie `[ Wszystko ]` resetuje wybór do całego mieszkania.
+3. **Start sprzątania (Play ▶):**
+   - Kliknij okrągły przycisk **Play (`▶`)** w sekcji **Ruch**.
+   - Robot wyruszy i posprząta po kolei wyłącznie zaznaczone pomieszczenia.
+   - Podczas sprzątania ikona przycisku zmienia się w **Pauzę (`||`)**, umożliwiając wstrzymanie robota w dowolnym momencie.
+4. **Powrót do bazy (Domek):**
+   - Przycisk z ikoną domku **Powrót do bazy** w sekcji **Stan** natychmiast odsyła robota do ładowarki. Po zadokowaniu wybór pokoi automatycznie resetuje się do opcji `Wszystko`.
 
 ---
 

@@ -12,11 +12,11 @@ components:
     version: 1
   - id: fluteriver09555.vacuumDock
     version: 1
+  - id: fluteriver09555.vacuumRoomSelector
+    version: 1
   - id: robotCleanerCleaningMode
     version: 1
   - id: robotCleanerTurboMode
-    version: 1
-  - id: fanSpeed
     version: 1
   - id: fluteriver09555.vacuumLocate
     version: 1
@@ -24,90 +24,6 @@ components:
     version: 1
   categories:
   - name: RobotCleaner
-
-- id: selectAll
-  label: "Odkurz wszystko"
-  capabilities:
-  - id: switch
-    version: 1
-  - id: momentary
-    version: 1
-  categories:
-  - name: Switch
-
-- id: deselectAll
-  label: "Odznacz wszystko"
-  capabilities:
-  - id: switch
-    version: 1
-  - id: momentary
-    version: 1
-  categories:
-  - name: Switch
-
-- id: room1
-  label: "Kuchnia"
-  capabilities:
-  - id: switch
-    version: 1
-  categories:
-  - name: Switch
-
-- id: room2
-  label: "Salon"
-  capabilities:
-  - id: switch
-    version: 1
-  categories:
-  - name: Switch
-
-- id: room3
-  label: "Korytarz"
-  capabilities:
-  - id: switch
-    version: 1
-  categories:
-  - name: Switch
-
-- id: room4
-  label: "Sypialnia"
-  capabilities:
-  - id: switch
-    version: 1
-  categories:
-  - name: Switch
-
-- id: room5
-  label: "Pokój Kasi"
-  capabilities:
-  - id: switch
-    version: 1
-  categories:
-  - name: Switch
-
-- id: room6
-  label: "Pokój Maćka"
-  capabilities:
-  - id: switch
-    version: 1
-  categories:
-  - name: Switch
-
-- id: room7
-  label: "Łazienka"
-  capabilities:
-  - id: switch
-    version: 1
-  categories:
-  - name: Switch
-
-- id: room8
-  label: "Pokój 8"
-  capabilities:
-  - id: switch
-    version: 1
-  categories:
-  - name: Switch
 
 deviceConfig:
   dashboard:
@@ -148,46 +64,16 @@ deviceConfig:
       capability: fluteriver09555.vacuumDock
       version: 1
     - component: main
+      capability: fluteriver09555.vacuumRoomSelector
+      version: 1
+    - component: main
       capability: robotCleanerCleaningMode
       version: 1
     - component: main
       capability: robotCleanerTurboMode
       version: 1
     - component: main
-      capability: fanSpeed
-      version: 1
-    - component: main
       capability: fluteriver09555.vacuumLocate
-      version: 1
-    - component: selectAll
-      capability: switch
-      version: 1
-    - component: deselectAll
-      capability: switch
-      version: 1
-    - component: room1
-      capability: switch
-      version: 1
-    - component: room2
-      capability: switch
-      version: 1
-    - component: room3
-      capability: switch
-      version: 1
-    - component: room4
-      capability: switch
-      version: 1
-    - component: room5
-      capability: switch
-      version: 1
-    - component: room6
-      capability: switch
-      version: 1
-    - component: room7
-      capability: switch
-      version: 1
-    - component: room8
-      capability: switch
       version: 1
     - component: main
       capability: refresh
@@ -207,47 +93,20 @@ deviceConfig:
         capability: robotCleanerOperatingState
         version: 1
       - component: main
+        capability: fluteriver09555.vacuumRoomSelector
+        version: 1
+      - component: main
         capability: robotCleanerCleaningMode
         version: 1
       - component: main
         capability: robotCleanerTurboMode
         version: 1
-      - component: main
-        capability: fanSpeed
-        version: 1
-      - component: selectAll
-        capability: switch
-        version: 1
-      - component: deselectAll
-        capability: switch
-        version: 1
-      - component: room1
-        capability: switch
-        version: 1
-      - component: room2
-        capability: switch
-        version: 1
-      - component: room3
-        capability: switch
-        version: 1
-      - component: room4
-        capability: switch
-        version: 1
-      - component: room5
-        capability: switch
-        version: 1
-      - component: room6
-        capability: switch
-        version: 1
-      - component: room7
-        capability: switch
-        version: 1
-      - component: room8
-        capability: switch
-        version: 1
     actions:
       - component: main
         capability: switch
+        version: 1
+      - component: main
+        capability: robotCleanerMovement
         version: 1
       - component: main
         capability: robotCleanerOperatingState
@@ -256,52 +115,16 @@ deviceConfig:
         capability: fluteriver09555.vacuumDock
         version: 1
       - component: main
+        capability: fluteriver09555.vacuumRoomSelector
+        version: 1
+      - component: main
         capability: robotCleanerCleaningMode
         version: 1
       - component: main
         capability: robotCleanerTurboMode
         version: 1
       - component: main
-        capability: fanSpeed
-        version: 1
-      - component: main
         capability: fluteriver09555.vacuumLocate
-        version: 1
-      - component: selectAll
-        capability: momentary
-        version: 1
-      - component: selectAll
-        capability: switch
-        version: 1
-      - component: deselectAll
-        capability: momentary
-        version: 1
-      - component: deselectAll
-        capability: switch
-        version: 1
-      - component: room1
-        capability: switch
-        version: 1
-      - component: room2
-        capability: switch
-        version: 1
-      - component: room3
-        capability: switch
-        version: 1
-      - component: room4
-        capability: switch
-        version: 1
-      - component: room5
-        capability: switch
-        version: 1
-      - component: room6
-        capability: switch
-        version: 1
-      - component: room7
-        capability: switch
-        version: 1
-      - component: room8
-        capability: switch
         version: 1
 
 preferences:
@@ -354,69 +177,37 @@ preferences:
       mop: "Tylko mopowanie"
     default: "auto"
 - name: room1Name
-  title: "Nazwa: Pokój 1"
-  description: "Nazwa pierwszego pokoju"
-  required: false
-  preferenceType: string
-  definition:
-    stringType: text
-    default: "Kuchnia"
-- name: room2Name
-  title: "Nazwa: Pokój 2"
-  description: "Nazwa drugiego pokoju"
+  title: "Nazwa: Salon"
+  description: "Nazwa pokoju Salon"
   required: false
   preferenceType: string
   definition:
     stringType: text
     default: "Salon"
+- name: room2Name
+  title: "Nazwa: Jadalnia"
+  description: "Nazwa pokoju Jadalnia"
+  required: false
+  preferenceType: string
+  definition:
+    stringType: text
+    default: "Jadalnia"
 - name: room3Name
-  title: "Nazwa: Pokój 3"
-  description: "Nazwa trzeciego pokoju"
+  title: "Nazwa: Pokój 1"
+  description: "Nazwa pokoju Pokój 1"
   required: false
   preferenceType: string
   definition:
     stringType: text
-    default: "Korytarz"
+    default: "Pokój 1"
 - name: room4Name
-  title: "Nazwa: Pokój 4"
-  description: "Nazwa czwartego pokoju"
+  title: "Nazwa: Kuchnia"
+  description: "Nazwa pokoju Kuchnia"
   required: false
   preferenceType: string
   definition:
     stringType: text
-    default: "Sypialnia"
-- name: room5Name
-  title: "Nazwa: Pokój 5"
-  description: "Nazwa piątego pokoju"
-  required: false
-  preferenceType: string
-  definition:
-    stringType: text
-    default: "Pokój Kasi"
-- name: room6Name
-  title: "Nazwa: Pokój 6"
-  description: "Nazwa szóstego pokoju"
-  required: false
-  preferenceType: string
-  definition:
-    stringType: text
-    default: "Pokój Maćka"
-- name: room7Name
-  title: "Nazwa: Pokój 7"
-  description: "Nazwa siódmego pokoju"
-  required: false
-  preferenceType: string
-  definition:
-    stringType: text
-    default: "Łazienka"
-- name: room8Name
-  title: "Nazwa: Pokój 8"
-  description: "Nazwa ósmego pokoju"
-  required: false
-  preferenceType: string
-  definition:
-    stringType: text
-    default: "Pokój 8"
+    default: "Kuchnia"
 - name: createDev
   title: "Utwórz kolejne urządzenie"
   description: "Przełącz, aby utworzyć dodatkowy profil urządzenia na hubie"
@@ -424,3 +215,4 @@ preferences:
   preferenceType: boolean
   definition:
     default: false
+
