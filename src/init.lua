@@ -131,41 +131,46 @@ local function sync_rooms_from_vacuum(device)
             room_id_map[key] = det.id
             table.insert(available_rooms, { key = key, name = name, id = det.id })
         end
-    else
-        -- Jeśli odkurzacz nie ma zapisanego harmonogramu z pokojami w chmurze,
-        -- ładujemy zdefiniowane strefy z konfiguracji urządzenia
-        log.info(string.format("[%s] Ładowanie zdefiniowanych pomieszczeń z konfiguracji urządzenia...", device.label))
-        for _, r in ipairs(ROOM_DEF) do
-            local name = get_room_name(device, r)
-            if name and name ~= "" then
-                room_id_map[r.key] = r.default_id
-                table.insert(available_rooms, { key = r.key, name = name, id = r.default_id })
+        device:set_field("detected_room_ids", room_id_map)
+        device:set_field("available_rooms", available_rooms)
+
+        local supported = { "all" }
+        for _, r in ipairs(available_rooms) do
+            table.insert(supported, r.key)
+        end
+        table.insert(supported, "sync")
+
+        emit_room_selector_event(device, "supportedRooms", supported)
+        emit_room_selector_event(device, "lastSelectedRoom", "all")
+        emit_room_selector_event(device, "selectedRooms", string.format("Wczytano %d pomieszczeń", #available_rooms))
+        log.info(string.format("[%s] Zaktualizowano supportedRooms: %s", device.label, table.concat(supported, ", ")))
+
+        device.thread:call_with_delay(2, function()
+            local sel = device:get_field("selected_rooms") or {}
+            if #sel == 0 then
+                emit_room_selector_event(device, "selectedRooms", "Wszystkie pokoje (całe mieszkanie)")
             end
-        end
+        end)
+    else
+        -- Jeżeli wczytywanie się nie powiodło (brak pokoi w odkurzaczu):
+        -- NIE zasilamy listy wirtualnymi pomieszczeniami.
+        -- Pozostaje tylko "Wszystko" i "Wczytaj pomieszczenia".
+        log.info(string.format("[%s] Brak pomieszczeń w odkurzaczu - pozostawiono tylko 'Wszystko' i 'Wczytaj pomieszczenia'", device.label))
+        device:set_field("detected_room_ids", {})
+        device:set_field("available_rooms", {})
+        device:set_field("selected_rooms", {})
+
+        emit_room_selector_event(device, "supportedRooms", { "all", "sync" })
+        emit_room_selector_event(device, "lastSelectedRoom", "all")
+        emit_room_selector_event(device, "selectedRooms", "Nie znaleziono pomieszczeń w odkurzaczu")
+
+        device.thread:call_with_delay(3, function()
+            local sel = device:get_field("selected_rooms") or {}
+            if #sel == 0 then
+                emit_room_selector_event(device, "selectedRooms", "Wszystkie pokoje (całe mieszkanie)")
+            end
+        end)
     end
-
-    device:set_field("detected_room_ids", room_id_map)
-    device:set_field("available_rooms", available_rooms)
-
-    -- Tworzymy dynamiczną listę przycisków w sekcji Zakres:
-    -- [ Wszystko ] [ Kuchnia ] [ Salon ] ... [ Wczytaj pomieszczenia ]
-    local supported = { "all" }
-    for _, r in ipairs(available_rooms) do
-        table.insert(supported, r.key)
-    end
-    table.insert(supported, "sync")
-
-    emit_room_selector_event(device, "supportedRooms", supported)
-    emit_room_selector_event(device, "lastSelectedRoom", "all")
-    emit_room_selector_event(device, "selectedRooms", string.format("Wczytano %d pomieszczeń", #available_rooms))
-    log.info(string.format("[%s] Zaktualizowano supportedRooms: %s", device.label, table.concat(supported, ", ")))
-
-    device.thread:call_with_delay(2, function()
-        local sel = device:get_field("selected_rooms") or {}
-        if #sel == 0 then
-            emit_room_selector_event(device, "selectedRooms", "Wszystkie pokoje (całe mieszkanie)")
-        end
-    end)
 end
 
 local function emit_vacuum_status(device, status)
