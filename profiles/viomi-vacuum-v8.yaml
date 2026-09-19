@@ -10,8 +10,6 @@ components:
     version: 1
   - id: robotCleanerOperatingState
     version: 1
-  - id: fluteriver09555.vacuumDock
-    version: 1
   - id: fluteriver09555.vacuumRoomSelector
     version: 1
   - id: robotCleanerCleaningMode
@@ -61,9 +59,6 @@ deviceConfig:
       capability: robotCleanerOperatingState
       version: 1
     - component: main
-      capability: fluteriver09555.vacuumDock
-      version: 1
-    - component: main
       capability: fluteriver09555.vacuumRoomSelector
       version: 1
     - component: main
@@ -110,9 +105,6 @@ deviceConfig:
         version: 1
       - component: main
         capability: robotCleanerOperatingState
-        version: 1
-      - component: main
-        capability: fluteriver09555.vacuumDock
         version: 1
       - component: main
         capability: fluteriver09555.vacuumRoomSelector
@@ -176,38 +168,6 @@ preferences:
       vacuum_and_mop: "Odkurzanie i mopowanie"
       mop: "Tylko mopowanie"
     default: "auto"
-- name: room1Name
-  title: "Nazwa: Salon"
-  description: "Nazwa pokoju Salon"
-  required: false
-  preferenceType: string
-  definition:
-    stringType: text
-    default: "Salon"
-- name: room2Name
-  title: "Nazwa: Jadalnia"
-  description: "Nazwa pokoju Jadalnia"
-  required: false
-  preferenceType: string
-  definition:
-    stringType: text
-    default: "Jadalnia"
-- name: room3Name
-  title: "Nazwa: Pokój 1"
-  description: "Nazwa pokoju Pokój 1"
-  required: false
-  preferenceType: string
-  definition:
-    stringType: text
-    default: "Pokój 1"
-- name: room4Name
-  title: "Nazwa: Kuchnia"
-  description: "Nazwa pokoju Kuchnia"
-  required: false
-  preferenceType: string
-  definition:
-    stringType: text
-    default: "Kuchnia"
 - name: createDev
   title: "Utwórz kolejne urządzenie"
   description: "Przełącz, aby utworzyć dodatkowy profil urządzenia na hubie"
@@ -215,4 +175,3 @@ preferences:
   preferenceType: boolean
   definition:
     default: false
-

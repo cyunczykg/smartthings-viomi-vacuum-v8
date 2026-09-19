@@ -161,7 +161,11 @@ local function send_with_retry(device, ip, token, method, params)
     -- Retry with fresh handshake
     clear_device_cache(device)
     socket.sleep(0.3)
-    return send_command_once(device, ip, token, method, params, true)
+    local ok2, response2 = pcall(send_command_once, device, ip, token, method, params, true)
+    if ok2 and response2 then
+        return response2
+    end
+    return nil
 end
 
 function miio.cmd(device, ip, token, method, params)
