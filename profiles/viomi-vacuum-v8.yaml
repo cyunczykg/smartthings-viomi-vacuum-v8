@@ -58,18 +58,45 @@ deviceConfig:
     - component: main
       capability: robotCleanerOperatingState
       version: 1
+      values: []
+      patch:
+        - op: remove
+          path: /0
     - component: main
       capability: fluteriver09555.vacuumRoomSelector
       version: 1
+      values: []
+      patch:
+        - op: replace
+          path: /0/label
+          value: "Pokoje wybrane do sprzątania"
+        - op: replace
+          path: /1/label
+          value: "Zakres sprzątania"
     - component: main
       capability: robotCleanerCleaningMode
       version: 1
+      values: []
+      patch:
+        - op: replace
+          path: /0/label
+          value: "Tryby"
     - component: main
       capability: robotCleanerTurboMode
       version: 1
+      values: []
+      patch:
+        - op: replace
+          path: /0/label
+          value: "Siła ssania"
     - component: main
       capability: fluteriver09555.vacuumLocate
       version: 1
+      values: []
+      patch:
+        - op: replace
+          path: /0/label
+          value: "Zlokalizuj odkurzacz"
     - component: main
       capability: refresh
       version: 1
